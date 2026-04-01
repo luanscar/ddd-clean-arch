@@ -1,12 +1,13 @@
 import type { IQueryHandler } from '@repo/shared-kernel'
 import { UniqueEntityId } from '@repo/shared-kernel'
-import { UserMapper } from '../../infrastructure/mappers/user.mapper.js'
+import { UserDtoMapper } from '../mappers/user-dto.mapper.js'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { GetUserProfileQuery } from './get-user-profile.query.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
 
 /**
  * GetUserProfileHandler — Executa uma busca por ID.
+ *
  * Em CQRS puro, isso acessaria diretamente o banco de dados ignorando o agregado.
  * Aqui, pelo escopo tático, passamos pelo repositório (que busca do Domain Model),
  * mas uma segunda implementação separada apenas para queries poderia mapear do Data Model.
@@ -27,7 +28,7 @@ export class GetUserProfileHandler
       return null
     }
 
-    // Retorna DTO via Mapper (ACL)
-    return UserMapper.instance.toDTO(user)
+    // Retorna DTO via Application Mapper
+    return UserDtoMapper.instance.toDTO(user)
   }
 }

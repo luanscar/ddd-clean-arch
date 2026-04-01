@@ -2,14 +2,14 @@ import type { UniqueEntityId, Email } from '@repo/shared-kernel'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { User } from '../../domain/user.js'
 import type { UserPersistence } from './user-persistence.js'
-import { UserMapper } from '../mappers/user.mapper.js'
+import { UserPersistenceMapper } from '../mappers/user-persistence.mapper.js'
 
 /**
  * InMemoryUserRepository — Implementação volátil para testes e demonstração.
  */
 export class InMemoryUserRepository implements IUserRepository {
   private readonly users = new Map<string, UserPersistence>()
-  private readonly mapper = UserMapper.instance
+  private readonly mapper = UserPersistenceMapper.instance
 
   async findByEmail(email: Email): Promise<User | null> {
     for (const userRaw of this.users.values()) {

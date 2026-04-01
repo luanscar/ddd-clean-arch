@@ -1,70 +1,41 @@
 /**
- * IMapper<Domain, Persistence, DTO> — Interface base para o padrão Anti-Corruption Layer.
+ * IPersistenceMapper<Domain, Persistence> — Mapeador de Infraestrutura/Banco.
  *
- * O Mapper é a fronteira explícita entre o modelo de domínio puro e os
- * modelos externos (ORM, HTTP response, GraphQL, etc.), impedindo que
- * detalhes de infra "vazem" para o domínio.
- *
- * Princípio de Separação:
- *  - `toDomain`      → infra/persistência → modelo de domínio rico
- *  - `toPersistence` → modelo de domínio → formato do banco (ORM entity/raw)
- *  - `toDTO`         → modelo de domínio → representação de saída da API
- *
- * @param Domain      - Tipo do modelo de domínio (Entidade, Agregado ou VO)
- * @param Persistence - Tipo do modelo de persistência (ORM entity, raw DB row, etc.)
- * @param DTO         - Tipo da representação de saída (HTTP response, GraphQL type, etc.)
- *                      Padrão: igual a Domain se não especificado.
- *
- * @example
- *   class UserMapper implements IMapper<User, UserOrmEntity, UserResponseDTO> {
- *     toDomain(raw: UserOrmEntity): User {
- *       const id = UniqueEntityId.reconstruct(raw.id)
- *       const email = Email.create(raw.email)
- *       // ...
- *       return User.reconstruct(id, { email, name: raw.name })
- *     }
- *
- *     toPersistence(user: User): UserOrmEntity {
- *       return { id: user.id.toString(), email: user.email.value, ... }
- *     }
- *
- *     toDTO(user: User): UserResponseDTO {
- *       return { id: user.id.toString(), email: user.email.value, ... }
- *     }
- *   }
+ * Responsável por converter entre o Modelo de Domínio e o Modelo de Persistência (OR-M).
+ * Residência Sugerida: Camada de Infrastructure do Bounded Context.
  */
-export interface IMapper<Domain, Persistence, DTO = Domain> {
-  /** Reconstrói o modelo de domínio a partir da representação de persistência. */
+export interface IPersistenceMapper<Domain, Persistence> {
+  /** Reconstrói o modelo de domínio a partir da representação de persistência (DB -> Domain). */
   toDomain(persistence: Persistence): Domain
 
-  /** Converte o modelo de domínio para a representação de persistência. */
+  /** Converte o modelo de domínio para a representação de persistência (Domain -> DB). */
   toPersistence(domain: Domain): Persistence
+}
 
-  /** Converte o modelo de domínio para o DTO de saída (HTTP/API). */
+/**
+ * IDtoMapper<Domain, DTO> — Mapeador de Aplicação/Interface.
+ *
+ * Responsável por converter o Agregado/Entidade em um Objeto de Transferência (DTO).
+ * Residência Sugerida: Camada de Application do Bounded Context.
+ */
+export interface IDtoMapper<Domain, DTO> {
+  /** Converte o modelo de domínio para o DTO de saída (Domain -> API Response). */
   toDTO(domain: Domain): DTO
 }
 
 /**
- * ICollectionMapper<Domain, Persistence, DTO> — Extensão para mapeamento em lote.
- *
- * Útil quando a conversão em lote pode ser otimizada (ex: batch query de JOIN).
+ * Mappers Legados ou Unificados podem implementar ambos, mas a prática 
+ * recomendada em DDD Senior é separá-los para evitar dependências circulares
+ * ou vazamento de lógica de API para a Camada de Infraestrutura.
  */
-export interface ICollectionMapper<Domain, Persistence, DTO = Domain>
-  extends IMapper<Domain, Persistence, DTO> {
-  toDomainList(persistenceList: Persistence[]): Domain[]
-  toPersistenceList(domainList: Domain[]): Persistence[]
-  toDTOList(domainList: Domain[]): DTO[]
-}
+export interface IMapper<Domain, Persistence, DTO = Domain> 
+  extends IPersistenceMapper<Domain, Persistence>, IDtoMapper<Domain, DTO> {}
 
 /**
- * AbstractMapper<Domain, Persistence, DTO> — Implementação base que fornece
- * `toDomainList`, `toPersistenceList` e `toDTOList` automaticamente,
- * delegando para os métodos singulares.
- *
- * Subclasses implementam apenas `toDomain`, `toPersistence` e `toDTO`.
+ * AbstractMapper<Domain, Persistence, DTO> — Utilitário para mapeamento em lote.
  */
 export abstract class AbstractMapper<Domain, Persistence, DTO = Domain>
-  implements ICollectionMapper<Domain, Persistence, DTO>
+  implements IMapper<Domain, Persistence, DTO>
 {
   abstract toDomain(persistence: Persistence): Domain
   abstract toPersistence(domain: Domain): Persistence

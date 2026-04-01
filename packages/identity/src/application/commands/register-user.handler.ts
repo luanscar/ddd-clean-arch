@@ -9,7 +9,7 @@ import { Role } from '../../domain/value-objects/role.js'
 import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists-error.js'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { IPasswordHasher } from '../../domain/services/password-hasher.js'
-import { UserMapper } from '../../infrastructure/mappers/user.mapper.js'
+import { UserDtoMapper } from '../mappers/user-dto.mapper.js'
 import type { IClock } from '@repo/shared-kernel'
 import type { RegisterUserCommand } from './register-user.command.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
@@ -24,9 +24,6 @@ import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
  *  4. Cria o agregado User (factory do domínio)
  *  5. Persiste via repositório
  *  6. Retorna UserProfileDTO
- *
- * NÃO despacha Domain Events — isso é responsabilidade do repositório
- * após o commit bem-sucedido.
  */
 export class RegisterUserHandler
   implements ICommandHandler<RegisterUserCommand, Result<UserProfileDTO, DomainError>>
@@ -71,7 +68,7 @@ export class RegisterUserHandler
     // 6. Persistir
     await this.userRepository.save(user)
 
-    // 7. Retornar DTO via Mapper (ACL)
-    return R.ok(UserMapper.instance.toDTO(user))
+    // 7. Retornar DTO via Application Mapper
+    return R.ok(UserDtoMapper.instance.toDTO(user))
   }
 }

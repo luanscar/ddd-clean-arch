@@ -7,7 +7,7 @@ import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials
 import { UserInactiveError } from '../../domain/errors/user-inactive-error.js'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { IPasswordHasher } from '../../domain/services/password-hasher.js'
-import { UserMapper } from '../../infrastructure/mappers/user.mapper.js'
+import { UserDtoMapper } from '../mappers/user-dto.mapper.js'
 import type { AuthenticateUserCommand } from './authenticate-user.command.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
 
@@ -31,9 +31,6 @@ export class AuthenticateUserHandler
     // 1. Criar e validar instancia de Email
     const emailResult = Email.create(command.email)
     if (!emailResult.ok) {
-      // Retornar um erro genérico ajuda na segurança (enumeração de credenciais).
-      // Mas para propósitos táticos, no DDD o erro específico diz que o formato de email
-      // não é apropriado. Aqui usaremos um erro generico de credenciais como fachada.
       return R.fail(new InvalidCredentialsError())
     }
 
@@ -42,7 +39,7 @@ export class AuthenticateUserHandler
     // 2. Busca o usuário por e-mail
     const user = await this.userRepository.findByEmail(email)
     if (!user) {
-      return R.fail(new InvalidCredentialsError()) // Generic credentials erro
+      return R.fail(new InvalidCredentialsError())
     }
 
     // 3. Validações de estado (Inactive)
@@ -60,7 +57,7 @@ export class AuthenticateUserHandler
       return R.fail(new InvalidCredentialsError())
     }
 
-    // 5. Retorna dto via Mapper (ACL)
-    return R.ok(UserMapper.instance.toDTO(user))
+    // 5. Retorna dto via Application Mapper
+    return R.ok(UserDtoMapper.instance.toDTO(user))
   }
 }

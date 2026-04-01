@@ -23,6 +23,9 @@ export * from './domain/repositories/user-repository.js'
 // Application DTOs
 export * from './application/dtos/user-profile.dto.js'
 
+// Application Mappers
+export * from './application/mappers/user-dto.mapper.js'
+
 // Application Commands
 export * from './application/commands/register-user.command.js'
 export * from './application/commands/register-user.handler.js'
@@ -34,7 +37,7 @@ export * from './application/queries/get-user-profile.query.js'
 export * from './application/queries/get-user-profile.handler.js'
 
 // Infrastructure
-export * from './infrastructure/mappers/user.mapper.js'
+export * from './infrastructure/mappers/user-persistence.mapper.js'
 export * from './infrastructure/repositories/in-memory-user.repository.js'
 export * from './infrastructure/repositories/user-persistence.js'
-export * from './infrastructure/services/in-memory-password-hasher.js'
+export * from './infrastructure/services/bcrypt-password-hasher.js'
