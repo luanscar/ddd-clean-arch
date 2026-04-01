@@ -12,7 +12,10 @@ import type { UniqueEntityId } from '@repo/shared-kernel'
 export class UserDeactivatedEvent extends DomainEvent {
   readonly eventName = 'IDENTITY.USER_DEACTIVATED' as const
 
-  constructor(aggregateId: UniqueEntityId) {
-    super(aggregateId)
+  constructor(
+    public readonly userId: UniqueEntityId,
+    public readonly occurredOn: Date,
+  ) {
+    super(userId, occurredOn)
   }
 }

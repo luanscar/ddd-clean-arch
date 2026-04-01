@@ -14,12 +14,12 @@ export class UserRegisteredEvent extends DomainEvent {
   readonly eventName = 'IDENTITY.USER_REGISTERED' as const
 
   constructor(
-    aggregateId: UniqueEntityId,
-    readonly email: Email,
-    readonly role: UserRoleValue,
-    readonly occurredAt: Date,
+    public readonly userId: UniqueEntityId,
+    public readonly email: Email,
+    public readonly role: UserRoleValue,
+    readonly occurredOn: Date,
   ) {
-    super(aggregateId)
+    super(userId, occurredOn)
   }
 
   override toJSON(): Record<string, unknown> {

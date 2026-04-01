@@ -90,23 +90,23 @@ export class User extends AggregateRoot<UniqueEntityId> {
     email: Email
     passwordHash: PasswordHash
     role?: Role
+    now: Date
   }): User {
     const id = UniqueEntityId.reconstruct(crypto.randomUUID())
-    const now = new Date()
 
     const state: UserState = {
       email: props.email,
       passwordHash: props.passwordHash,
       role: props.role ?? Role.member(),
       status: UserStatus.ACTIVE,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: props.now,
+      updatedAt: props.now,
     }
 
     const user = new User(id, state)
 
     user.addDomainEvent(
-      new UserRegisteredEvent(id, props.email, state.role.value, now),
+      new UserRegisteredEvent(id, props.email, state.role.value, props.now),
     )
 
     return user
@@ -129,13 +129,13 @@ export class User extends AggregateRoot<UniqueEntityId> {
    * Troca a senha do usuário.
    * Invariante: usuário deve estar ACTIVE.
    */
-  changePassword(newHash: PasswordHash): Result<void, UserInactiveError> {
+  changePassword(newHash: PasswordHash, now: Date): Result<void, UserInactiveError> {
     if (!this.isActive) {
       return R.fail(new UserInactiveError())
     }
 
     this._state.passwordHash = newHash
-    this._state.updatedAt = new Date()
+    this._state.updatedAt = now
 
     return R.ok(undefined)
   }
@@ -144,15 +144,15 @@ export class User extends AggregateRoot<UniqueEntityId> {
    * Desativa o usuário e emite `UserDeactivatedEvent`.
    * Invariante: usuário deve estar ACTIVE.
    */
-  deactivate(): Result<void, UserInactiveError> {
+  deactivate(now: Date): Result<void, UserInactiveError> {
     if (!this.isActive) {
       return R.fail(new UserInactiveError())
     }
 
     this._state.status = UserStatus.INACTIVE
-    this._state.updatedAt = new Date()
+    this._state.updatedAt = now
 
-    this.addDomainEvent(new UserDeactivatedEvent(this._id))
+    this.addDomainEvent(new UserDeactivatedEvent(this.id, now))
 
     return R.ok(undefined)
   }
@@ -160,9 +160,9 @@ export class User extends AggregateRoot<UniqueEntityId> {
   /**
    * Reativa um usuário inativo.
    */
-  activate(): void {
+  activate(now: Date): void {
     this._state.status = UserStatus.ACTIVE
-    this._state.updatedAt = new Date()
+    this._state.updatedAt = now
   }
 
   /**

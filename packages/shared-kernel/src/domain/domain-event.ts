@@ -48,8 +48,11 @@ export abstract class DomainEvent implements IDomainEvent {
 
   abstract readonly eventName: string
 
-  protected constructor(readonly aggregateId: UniqueEntityId) {
-    this.occurredOn = new Date()
+  protected constructor(
+    readonly aggregateId: UniqueEntityId,
+    occurredOn?: Date,
+  ) {
+    this.occurredOn = occurredOn ?? new Date()
   }
 
   /** Serialização para logging e auditoria. */

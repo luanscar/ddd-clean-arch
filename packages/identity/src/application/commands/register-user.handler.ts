@@ -10,6 +10,7 @@ import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists-
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { IPasswordHasher } from '../../domain/services/password-hasher.js'
 import { UserMapper } from '../../infrastructure/mappers/user.mapper.js'
+import type { IClock } from '@repo/shared-kernel'
 import type { RegisterUserCommand } from './register-user.command.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
 
@@ -33,6 +34,7 @@ export class RegisterUserHandler
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly passwordHasher: IPasswordHasher,
+    private readonly clock: IClock,
   ) {}
 
   async handle(
@@ -63,6 +65,7 @@ export class RegisterUserHandler
       email: emailResult.value,
       passwordHash,
       role: roleResult.value,
+      now: this.clock.now(),
     })
 
     // 6. Persistir
