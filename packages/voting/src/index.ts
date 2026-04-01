@@ -25,6 +25,7 @@ export { VoteCastEvent } from './domain/events/vote-cast-event.js'
 
 // Repositories
 export type { IPollRepository, FindPollsParams } from './domain/repositories/poll-repository.js'
+export { InMemoryPollRepository } from './infrastructure/repositories/in-memory-poll.repository.js'
 
 // ─── Application ─────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ export type { PollDTO } from './application/dtos/poll.dto.js'
 
 // Mappers
 export { PollMapper } from './application/mappers/poll.mapper.js'
+export { PollPersistenceMapper } from './infrastructure/mappers/poll-persistence.mapper.js'
 
 // Command Handlers
 export { CreatePollHandler } from './application/commands/create-poll.handler.js'

@@ -1,5 +1,5 @@
 import type { IRepository } from '@repo/shared-kernel'
-import type { Email, UniqueEntityId } from '@repo/shared-kernel'
+import type { Email, UniqueEntityId, TenantId } from '@repo/shared-kernel'
 import type { User } from '../user.js'
 
 /**
@@ -15,5 +15,5 @@ export interface IUserRepository extends IRepository<User, UniqueEntityId> {
    * Busca um usuário pelo endereço de e-mail.
    * Retorna `null` se não encontrado (sem lançar NotFoundError — decisão da use case).
    */
-  findByEmail(email: Email): Promise<User | null>
+  findByEmail(email: Email, tenantId: TenantId): Promise<User | null>
 }

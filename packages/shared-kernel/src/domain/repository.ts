@@ -1,5 +1,6 @@
 import type { AggregateRoot } from './aggregate-root.js'
 import type { UniqueEntityId } from './value-objects/unique-entity-id.js'
+import type { TenantId } from './value-objects/tenant-id.js'
 
 /**
  * IRepository<T, ID> — Interface genérica de Repositório DDD.
@@ -25,17 +26,17 @@ export interface IRepository<
   T extends AggregateRoot<ID>,
   ID extends UniqueEntityId = UniqueEntityId,
 > {
-  /** Busca o agregado pelo ID. Retorna `null` se não existir. */
-  findById(id: ID): Promise<T | null>
+  /** Busca o agregado pelo ID e Tenant. Retorna `null` se não existir. */
+  findById(id: ID, tenantId: TenantId): Promise<T | null>
 
   /** Persiste um novo agregado ou atualiza um existente (upsert semântico). */
   save(aggregate: T): Promise<void>
 
-  /** Remove o agregado pelo ID. */
-  delete(id: ID): Promise<void>
+  /** Remove o agregado pelo ID e Tenant. */
+  delete(id: ID, tenantId: TenantId): Promise<void>
 
-  /** Verifica se um agregado com o ID fornecido existe. */
-  exists(id: ID): Promise<boolean>
+  /** Verifica se um agregado com o ID e Tenant fornecidos existe. */
+  exists(id: ID, tenantId: TenantId): Promise<boolean>
 }
 
 /**

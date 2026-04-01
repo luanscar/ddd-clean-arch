@@ -1,6 +1,5 @@
-import type { Result } from '@repo/shared-kernel'
-import { Result as R } from '@repo/shared-kernel'
-import { Email } from '@repo/shared-kernel'
+import type { Result, ITenantProvider } from '@repo/shared-kernel'
+import { Result as R, Email, TenantId } from '@repo/shared-kernel'
 import type { ICommandHandler } from '@repo/shared-kernel'
 import type { DomainError } from '@repo/shared-kernel'
 import { InvalidCredentialsError } from '../../domain/errors/invalid-credentials-error.js'
@@ -23,11 +22,16 @@ export class AuthenticateUserHandler
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly passwordHasher: IPasswordHasher,
+    private readonly tenantProvider: ITenantProvider,
   ) {}
 
   async handle(
     command: AuthenticateUserCommand,
   ): Promise<Result<UserProfileDTO, DomainError>> {
+    const tenantId = command.tenantId
+      ? TenantId.reconstruct(command.tenantId)
+      : this.tenantProvider.getTenantId()
+
     // 1. Criar e validar instancia de Email
     const emailResult = Email.create(command.email)
     if (!emailResult.ok) {
@@ -36,8 +40,8 @@ export class AuthenticateUserHandler
 
     const email = emailResult.value
 
-    // 2. Busca o usuário por e-mail
-    const user = await this.userRepository.findByEmail(email)
+    // 2. Busca o usuário por e-mail E Tenant
+    const user = await this.userRepository.findByEmail(email, tenantId)
     if (!user) {
       return R.fail(new InvalidCredentialsError())
     }

@@ -1,6 +1,6 @@
 import type { Result } from '@repo/shared-kernel'
 import { Result as R } from '@repo/shared-kernel'
-import { AggregateRoot, UniqueEntityId } from '@repo/shared-kernel'
+import { AggregateRoot, UniqueEntityId, TenantId } from '@repo/shared-kernel'
 import type { Email } from '@repo/shared-kernel'
 import type { PasswordHash } from './value-objects/password-hash.js'
 import { Role } from './value-objects/role.js'
@@ -41,8 +41,8 @@ interface UserState {
 export class User extends AggregateRoot<UniqueEntityId> {
   private _state: UserState
 
-  private constructor(id: UniqueEntityId, state: UserState) {
-    super(id)
+  private constructor(id: UniqueEntityId, tenantId: TenantId, state: UserState) {
+    super(id, tenantId)
     this._state = state
   }
 
@@ -90,6 +90,7 @@ export class User extends AggregateRoot<UniqueEntityId> {
     email: Email
     passwordHash: PasswordHash
     role?: Role
+    tenantId: TenantId
     now: Date
   }): User {
     const id = UniqueEntityId.reconstruct(crypto.randomUUID())
@@ -103,7 +104,7 @@ export class User extends AggregateRoot<UniqueEntityId> {
       updatedAt: props.now,
     }
 
-    const user = new User(id, state)
+    const user = new User(id, props.tenantId, state)
 
     user.addDomainEvent(
       new UserRegisteredEvent(id, props.email, state.role.value, props.now),
@@ -118,9 +119,10 @@ export class User extends AggregateRoot<UniqueEntityId> {
    */
   static reconstitute(
     id: UniqueEntityId,
+    tenantId: TenantId,
     state: UserState,
   ): User {
-    return new User(id, state)
+    return new User(id, tenantId, state)
   }
 
   // ─── Domain Behavior ───────────────────────────────────────────────────────

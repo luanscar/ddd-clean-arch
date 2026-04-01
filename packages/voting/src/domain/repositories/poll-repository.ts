@@ -1,25 +1,20 @@
-import type { UniqueEntityId, PaginatedDTO } from '@repo/shared-kernel'
+import type { UniqueEntityId, PaginatedDTO, TenantId, IRepository } from '@repo/shared-kernel'
 import type { Poll } from '../poll.js'
 
 export interface FindPollsParams {
   page: number
   limit: number
   status?: string
+  tenantId: TenantId
 }
 
-export interface IPollRepository {
+/**
+ * IPollRepository — Interface de repositório para o agregado Poll.
+ * Estende o contrato genérico IRepository para garantir consistência em Multi-Tenancy.
+ */
+export interface IPollRepository extends IRepository<Poll, UniqueEntityId> {
   /**
-   * Tenta encontrar uma Sessão de Votação (Poll) pelo ID.
-   */
-  findById(id: UniqueEntityId): Promise<Poll | null>
-
-  /**
-   * Salva a Sessão de Votação (Cria ou Atualiza).
-   */
-  save(poll: Poll): Promise<void>
-
-  /**
-   * Busca Sessões de Votação (Polls) paginadas.
+   * Busca Sessões de Votação (Polls) paginadas dentro de um Tenant específico.
    */
   findMany(params: FindPollsParams): Promise<PaginatedDTO<Poll>>
 }

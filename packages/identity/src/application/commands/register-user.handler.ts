@@ -1,6 +1,5 @@
-import type { Result } from '@repo/shared-kernel'
-import { Result as R } from '@repo/shared-kernel'
-import { Email } from '@repo/shared-kernel'
+import type { Result, ITenantProvider } from '@repo/shared-kernel'
+import { Result as R, Email, TenantId } from '@repo/shared-kernel'
 import type { ICommandHandler } from '@repo/shared-kernel'
 import type { DomainError } from '@repo/shared-kernel'
 import { User } from '../../domain/user.js'
@@ -32,11 +31,17 @@ export class RegisterUserHandler
     private readonly userRepository: IUserRepository,
     private readonly passwordHasher: IPasswordHasher,
     private readonly clock: IClock,
+    private readonly tenantProvider: ITenantProvider,
   ) {}
 
   async handle(
     command: RegisterUserCommand,
   ): Promise<Result<UserProfileDTO, DomainError>> {
+    // 0. Resolver Tenant
+    const tenantId = command.tenantId
+      ? TenantId.reconstruct(command.tenantId)
+      : this.tenantProvider.getTenantId()
+
     // 1. Validar e-mail
     const emailResult = Email.create(command.email)
     if (!emailResult.ok) return emailResult
@@ -47,8 +52,8 @@ export class RegisterUserHandler
       : R.ok(Role.member())
     if (!roleResult.ok) return roleResult
 
-    // 3. Verificar unicidade do e-mail
-    const existing = await this.userRepository.findByEmail(emailResult.value)
+    // 3. Verificar unicidade do e-mail dentro do Tenant
+    const existing = await this.userRepository.findByEmail(emailResult.value, tenantId)
     if (existing !== null) {
       return R.fail(new UserAlreadyExistsError(command.email))
     }
@@ -62,6 +67,7 @@ export class RegisterUserHandler
       email: emailResult.value,
       passwordHash,
       role: roleResult.value,
+      tenantId,
       now: this.clock.now(),
     })
 

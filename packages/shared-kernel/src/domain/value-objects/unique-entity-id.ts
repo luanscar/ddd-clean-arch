@@ -37,7 +37,7 @@ export class UniqueEntityId extends ValueObject<UniqueEntityIdProps> {
     return this.props.value
   }
 
-  private constructor(id: EntityId) {
+  protected constructor(id: EntityId) {
     super({ value: id })
   }
 

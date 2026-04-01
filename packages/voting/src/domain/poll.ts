@@ -1,4 +1,4 @@
-import { AggregateRoot, UniqueEntityId, DomainError } from '@repo/shared-kernel'
+import { AggregateRoot, UniqueEntityId, TenantId, DomainError } from '@repo/shared-kernel'
 import type { Result } from '@repo/shared-kernel'
 import { Result as R } from '@repo/shared-kernel'
 import { PollStatus } from './value-objects/poll-status.js'
@@ -41,8 +41,8 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
     return [...this._state.votes]
   }
 
-  private constructor(id: UniqueEntityId, state: PollState) {
-    super(id)
+  private constructor(id: UniqueEntityId, tenantId: TenantId, state: PollState) {
+    super(id, tenantId)
     this._state = state
   }
 
@@ -53,6 +53,7 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
   static create(props: {
     title: string
     allowedOptions: string[]
+    tenantId: TenantId
     now: Date
   }): Poll {
     const id = UniqueEntityId.reconstruct(crypto.randomUUID())
@@ -71,7 +72,7 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
       closedAt: null,
     }
 
-    const poll = new Poll(id, state)
+    const poll = new Poll(id, props.tenantId, state)
     poll.addDomainEvent(new PollCreatedEvent(id, state.title, state.allowedOptions, props.now))
     
     return poll
@@ -80,8 +81,8 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
   /**
    * Reconstituição da camada de persistência.
    */
-  static reconstitute(id: UniqueEntityId, state: PollState): Poll {
-    return new Poll(id, state)
+  static reconstitute(id: UniqueEntityId, tenantId: TenantId, state: PollState): Poll {
+    return new Poll(id, tenantId, state)
   }
 
   /**

@@ -1,4 +1,5 @@
 import type { UniqueEntityId } from './value-objects/unique-entity-id.js'
+import type { TenantId } from './value-objects/tenant-id.js'
 import type { IDomainEvent } from './domain-event.js'
 import { Entity } from './entity.js'
 
@@ -30,7 +31,17 @@ import { Entity } from './entity.js'
 export abstract class AggregateRoot<
   ID extends UniqueEntityId = UniqueEntityId,
 > extends Entity<ID> {
+  protected readonly _tenantId: TenantId
   private _domainEvents: IDomainEvent[] = []
+
+  protected constructor(id: ID, tenantId: TenantId) {
+    super(id)
+    this._tenantId = tenantId
+  }
+
+  get tenantId(): TenantId {
+    return this._tenantId
+  }
 
   /** Eventos acumulados durante esta transação de domínio (somente leitura). */
   get domainEvents(): ReadonlyArray<IDomainEvent> {

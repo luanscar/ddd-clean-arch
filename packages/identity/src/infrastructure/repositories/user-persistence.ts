@@ -12,6 +12,7 @@ import type { UserRoleValue } from '../../domain/value-objects/role.js'
  */
 export interface UserPersistence {
   readonly id: string
+  readonly tenantId: string
   readonly email: string
   readonly passwordHash: string
   readonly role: UserRoleValue

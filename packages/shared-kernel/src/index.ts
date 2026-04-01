@@ -23,6 +23,7 @@ export * from './domain/specification.js'
 export * from './domain/composite-specification.js'
 
 // Domain Value Objects (Standard)
+export * from './domain/value-objects/tenant-id.js'
 export * from './domain/value-objects/unique-entity-id.js'
 export * from './domain/value-objects/email.js'
 export * from './domain/value-objects/money.js'
@@ -39,6 +40,9 @@ export * from './application/command-handler.js'
 export * from './application/query-handler.js'
 export * from './application/bus.js'
 export * from './application/use-case.js'
+
+// Application Services
+export * from './application/services/tenant-provider.js'
 
 // Application Ports & DTOs
 export * from './application/ports/logger.js'

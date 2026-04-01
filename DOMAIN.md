@@ -1,56 +1,103 @@
 # DDD — Camada Estratégica
 
-Este documento formaliza o design estratégico do sistema, garantindo o alinhamento entre o negócio e a implementação técnica.
+Este documento formaliza o design estratégico do sistema, garantindo o alinhamento entre o negócio e a implementação técnica de um motor de votação multi-tenant.
 
-## 1. Mapa de Contextos (Context Map)
+## 1. Visão Geral do Domínio
 
-O sistema é composto por dois Bounded Contexts principais.
+O sistema é um **Motor de Votação (Voting Engine)** agnóstico e de alta performance, desenhado para ser o alicerce de plataformas de governança digital. 
+
+O diferencial core é a flexibilidade: o sistema não conhece as regras específicas de quem está votando (ex: Câmara Municipal vs. Condomínio), mas fornece as garantias fundamentais de **integridade, isolamento e auditabilidade** através de uma arquitetura **Multi-Tenant**.
+
+### Objetivos Estratégicos
+- **Isolamento de Dados**: Garantir que cada inquilino (Tenant) tenha sua própria jurisdição lógica.
+- **Escalabilidade Horizontal**: Suportar o uso como SaaS (Software as a Service) ou instâncias isoladas (On-premise).
+- **Agnosticismo**: Separar o "como votar" (Voting Context) de "o que está sendo decidido" (Legislative Context).
+
+## 2. Mapa de Contextos (Context Map)
+
+O sistema utiliza um **Shared Kernel** para garantir a consistência da identidade do inquilino em todos os contextos.
 
 ```mermaid
 graph TD
+    SK[Shared Kernel: Multi-Tenancy & Base Models]
+    
     subgraph "Bounded Context: Identity"
         User[User Aggregate]
     end
 
-    subgraph "Bounded Context: Voting"
+    subgraph "Bounded Context: Voting (Motor)"
         Poll[Poll Aggregate]
         Vote[Vote Entity]
     end
 
-    User -- "Authenticates" --> Voting_API
-    Voting_API -- "Uses" --> Poll
+    subgraph "Bounded Context: Legislative (Planned)"
+        Law[Law/Bill Context]
+    end
+
+    SK -- "Shared Architecture" --> Identity
+    SK -- "Shared Architecture" --> Voting
     
-    Poll -- "Emite Eventos" --> Notification_Service[Serviços Externos]
+    Identity -- "Customer-Supplier" --> Voting
+    Legislative -- "Conformist/ACL" --> Voting
 ```
 
 ### Relação entre Contextos
-- **Identity -> Voting**: Relação de *Customer-Supplier*. O contexto de Voting depende do `VoterId` (provido pelo Identity) para garantir a unicidade do voto.
+- **Shared Kernel**: Provê `TenantId`, `AggregateRoot` e `UniqueEntityId`. Essencial para o isolamento.
+- **Identity -> Voting**: O contexto de Voting consome a identidade verificada do eleitor.
+- **Legislative -> Voting**: O contexto legislativo (em planejamento) usará o motor de votação para decidir o destino de Projetos de Lei.
 
----
+## 3. Modelo de Tenancy e Isolamento
 
-## 2. Linguagem Ubíqua (Glossário)
+O sistema adota o modelo de **Isolamento Lógico (Shared Database)**.
+
+- **Identidade Única**: Toda `AggregateRoot` possui um `TenantId`.
+- **Filtro Obrigatório**: Repositórios e Handlers não podem realizar operações sem um `TenantId` válido.
+- **Resolução de Contexto**: O inquilino é resolvido na camada de Aplicação via `ITenantProvider`.
+
+## 4. Linguagem Ubíqua (Glossário)
 
 | Termo (PT-BR) | Termo (Código) | Definição |
 | :--- | :--- | :--- |
+| **Inquilino** | `Tenant` | Uma organização isolada (ex: Câmara, Conselho, Associação). |
 | **Pauta / Sessão** | `Poll` | O objeto central que define o que está sendo votado. |
-| **Opção de Voto** | `PollOption` | Uma escolha válida (ex: Sim, Não, Abstenção). |
-| **Eleitor** | `Voter` | Autorizado a registrar um voto. |
-| **Cédula / Voto** | `Vote` | O registro individual de um voto. |
-| **Apuração** | `Tally` | O resultado final consolidado. |
+| **Opção de Voto** | `PollOption` | Uma escolha válida (ex: Sim, Não). |
+| **Parlamentar** | `Parliamentarian` | Usuário com poder deliberativo dentro de um Tenant. |
+| **Cédula** | `Vote` | O registro imutável de uma intenção de voto. |
+| **Apuração** | `Tally` | O resultado consolidado de uma sessão. |
+
+## 5. Classificação de Subdomínios
+
+1.  **Core Domain (Voting Motor)**: O motor de regras, invariantes e apuração.
+2.  **Supporting Subdomain (Identity)**: Gestão de acesso e perfis de usuários.
+3.  **Generic Subdomain (Shared Kernel)**: Infraestrutura de Multi-Tenancy e tipos base.
+4.  **Supporting Subdomain (Legislative)**: Regras específicas de fluxos deliberativos (Câmaras, Assembleias).
+
+## 6. Invariantes de Negócio (Regras de Ouro)
+
+- **Isolamento Total**: Um inquilino nunca pode ler ou intervir em pautas de outro inquilino.
+- **Unicidade de Voto**: Um eleitor só pode depositar uma cédula por pauta.
+- **Imutabilidade**: Votos e resultados de apuração não podem ser alterados após o fechamento.
+- **Integridade de Urna**: Votos só são aceitos em pautas com status `OPEN`.
 
 ---
 
-## 3. Classificação de Subdomínios
+## 7. Checklist de Conformidade DDD
 
-1.  **Core Domain (Votação)**: Diferencial competitivo.
-2.  **Supporting Subdomain (Identity)**: Essencial para o funcionamento, mas não o núcleo.
-3.  **Generic Subdomain (Shared Kernel)**: Utilitários técnicos reutilizáveis.
+Para garantir a saúde do projeto, seguimos rigorosamente este checklist:
 
----
+### Camada Estratégica
+- [x] **Linguagem Ubíqua**: Formalizada na seção 4 deste documento.
+- [x] **Bounded Contexts**: Delimitados em pacotes NPM separados.
+- [x] **Context Map**: Visualizado na seção 2.
+- [x] **Subdomínios**: Identificados na seção 5.
 
-## 4. Invariantes de Negócio (Regras de Ouro)
+### Camada Tática
+- [x] **Entidades**: Identidade (`UniqueEntityId`) e comportamento encapsulado.
+- [x] **Value Objects**: Imutáveis e sem identidade (ex: `Email`, `PasswordHash`).
+- [x] **Agregados**: Raízes que garantem consistência transacional.
+- [x] **Repositórios**: Abstraem persistência, nunca vazam detalhes de DB.
+- [x] **Eventos de Domínio**: Comunicam mudanças (`UserRegisteredEvent`, etc.).
 
-- **Unicidade**: Um eleitor só pode depositar uma cédula por pauta.
-- **Imutabilidade**: Voto não pode ser alterado após registro.
-- **Integridade**: Votos só permitidos em urnas `OPEN`.
-- **Consistência**: Total da apuração deve coincidir com os votos.
+### Arquitetura
+- [x] **Independência**: O domínio é ignorante quanto a frameworks e bancos de dados.
+- [x] **Multi-Tenancy**: Isolamento garantido por `TenantId` no `AggregateRoot`.

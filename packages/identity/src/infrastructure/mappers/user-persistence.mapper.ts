@@ -1,4 +1,4 @@
-import { UniqueEntityId, Email } from '@repo/shared-kernel'
+import { UniqueEntityId, Email, TenantId } from '@repo/shared-kernel'
 import type { IPersistenceMapper } from '@repo/shared-kernel'
 import { User } from '../../domain/user.js'
 import { PasswordHash } from '../../domain/value-objects/password-hash.js'
@@ -22,7 +22,9 @@ export class UserPersistenceMapper implements IPersistenceMapper<User, UserPersi
       throw new Error(`[UserPersistenceMapper] Database corruption: invalid data for user ${raw.id}`)
     }
 
-    return User.reconstitute(id, {
+    const tenantId = TenantId.reconstruct(raw.tenantId)
+
+    return User.reconstitute(id, tenantId, {
       email: emailResult.value,
       passwordHash: PasswordHash.fromHash(raw.passwordHash),
       role: roleResult.value,
@@ -39,6 +41,7 @@ export class UserPersistenceMapper implements IPersistenceMapper<User, UserPersi
     const state = user.toState()
     return {
       id: user.id.value,
+      tenantId: user.tenantId.value,
       email: user.email.value,
       passwordHash: user.passwordHash.value,
       role: user.role.value,

@@ -6,4 +6,6 @@ export interface RegisterUserCommand extends ICommand {
   readonly password: string
   /** opcional — padrão: 'member' */
   readonly role?: string
+  /** opcional — id do inquilino. Se omitido, o sistema tentará resolver via contexto. */
+  readonly tenantId?: string
 }
