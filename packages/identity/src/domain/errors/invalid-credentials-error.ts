@@ -1,4 +1,4 @@
-import { DomainError } from '@repo/shared-kernel/domain'
+import { DomainError } from '@repo/shared-kernel'
 
 export class InvalidCredentialsError extends DomainError {
   readonly code = 'IDENTITY.INVALID_CREDENTIALS' as const

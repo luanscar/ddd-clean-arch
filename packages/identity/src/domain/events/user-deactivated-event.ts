@@ -1,5 +1,5 @@
-import { DomainEvent } from '@repo/shared-kernel/domain'
-import type { UniqueEntityId } from '@repo/shared-kernel/domain'
+import { DomainEvent } from '@repo/shared-kernel'
+import type { UniqueEntityId } from '@repo/shared-kernel'
 
 /**
  * UserDeactivatedEvent — emitido quando um usuário é desativado.

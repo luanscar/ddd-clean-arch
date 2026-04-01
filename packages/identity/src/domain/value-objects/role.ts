@@ -1,6 +1,6 @@
-import type { Result } from '@repo/shared-kernel/helpers'
-import { Result as R } from '@repo/shared-kernel/helpers'
-import { ValueObject, ValidationError } from '@repo/shared-kernel/domain'
+import type { Result } from '@repo/shared-kernel'
+import { Result as R } from '@repo/shared-kernel'
+import { ValueObject, ValidationError } from '@repo/shared-kernel'
 
 /**
  * UserRole — Roles disponíveis no contexto de identidade.

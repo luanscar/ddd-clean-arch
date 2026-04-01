@@ -1,27 +1,41 @@
-/**
- * @repo/shared-kernel
- *
- * Shared Kernel DDD — primitivos táticos compartilhados entre todos os
- * Bounded Contexts do sistema.
- *
- * Importação por sub-path (recomendado para tree-shaking):
- *   import { Entity, AggregateRoot } from '@repo/shared-kernel/domain'
- *   import { Result, Guard }         from '@repo/shared-kernel/helpers'
- *   import { IUseCase }              from '@repo/shared-kernel/application'
- *   import { AbstractMapper }        from '@repo/shared-kernel/infrastructure'
- *
- * Importação via barrel único (conveniente em contextos menores):
- *   import { Entity, Result, IUseCase } from '@repo/shared-kernel'
- */
+// Helpers
+export * from './helpers/types.js'
+export * from './helpers/result.js'
+export * from './helpers/either.js'
+export * from './helpers/guard.js'
 
-// ─── Helpers (sem dependências internas) ─────────────────────────────────────
-export * from './helpers/index.js'
+// Domain Primitives
+export * from './domain/value-object.js'
+export * from './domain/entity.js'
+export * from './domain/aggregate-root.js'
 
-// ─── Domain (depende apenas de helpers) ──────────────────────────────────────
-export * from './domain/index.js'
+// Domain Events
+export * from './domain/domain-event.js'
+export * from './domain/domain-event-handler.js'
+export * from './domain/domain-event-dispatcher.js'
 
-// ─── Application (depende de domain e helpers) ───────────────────────────────
-export * from './application/index.js'
+// Domain Repository & Specification
+export * from './domain/repository.js'
+export * from './domain/specification.js'
+export * from './domain/composite-specification.js'
 
-// ─── Infrastructure (depende de domain e helpers) ────────────────────────────
-export * from './infrastructure/index.js'
+// Domain Value Objects (Standard)
+export * from './domain/value-objects/unique-entity-id.js'
+export * from './domain/value-objects/email.js'
+export * from './domain/value-objects/money.js'
+export * from './domain/value-objects/pagination.js'
+
+// Domain Errors
+export * from './domain/errors/domain-error.js'
+export * from './domain/errors/validation-error.js'
+export * from './domain/errors/not-found-error.js'
+export * from './domain/errors/conflict-error.js'
+
+// Application
+export * from './application/command-handler.js'
+export * from './application/query-handler.js'
+export * from './application/bus.js'
+export * from './application/use-case.js'
+
+// Infrastructure
+export * from './infrastructure/mapper.js'

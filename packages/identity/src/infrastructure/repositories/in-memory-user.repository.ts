@@ -1,4 +1,4 @@
-import type { UniqueEntityId, Email } from '@repo/shared-kernel/domain'
+import type { UniqueEntityId, Email } from '@repo/shared-kernel'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { User } from '../../domain/user.js'
 import type { UserPersistence } from './user-persistence.js'

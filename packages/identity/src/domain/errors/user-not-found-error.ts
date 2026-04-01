@@ -1,4 +1,4 @@
-import { DomainError } from '@repo/shared-kernel/domain'
+import { DomainError } from '@repo/shared-kernel'
 
 export class UserNotFoundError extends DomainError {
   readonly code = 'IDENTITY.USER_NOT_FOUND' as const

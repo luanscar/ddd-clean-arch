@@ -1,5 +1,5 @@
-import type { IQueryHandler } from '@repo/shared-kernel/application'
-import { UniqueEntityId } from '@repo/shared-kernel/domain'
+import type { IQueryHandler } from '@repo/shared-kernel'
+import { UniqueEntityId } from '@repo/shared-kernel'
 import { UserMapper } from '../../infrastructure/mappers/user.mapper.js'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { GetUserProfileQuery } from './get-user-profile.query.js'

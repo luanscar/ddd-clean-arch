@@ -1,5 +1,5 @@
-import type { IRepository } from '@repo/shared-kernel/domain'
-import type { Email, UniqueEntityId } from '@repo/shared-kernel/domain'
+import type { IRepository } from '@repo/shared-kernel'
+import type { Email, UniqueEntityId } from '@repo/shared-kernel'
 import type { User } from '../user.js'
 
 /**

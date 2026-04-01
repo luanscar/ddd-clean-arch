@@ -1,5 +1,5 @@
-import type { Brand } from '@repo/shared-kernel/helpers'
-import { ValueObject } from '@repo/shared-kernel/domain'
+import type { Brand } from '@repo/shared-kernel'
+import { ValueObject } from '@repo/shared-kernel'
 
 /**
  * HashedPassword — Brand type para distinguir senhas já hashadas de strings genéricas.

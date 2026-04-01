@@ -1,4 +1,4 @@
-import { DomainError } from '@repo/shared-kernel/domain'
+import { DomainError } from '@repo/shared-kernel'
 
 /**
  * UserInactiveError — disparado quando um usuário inativo tenta autenticar

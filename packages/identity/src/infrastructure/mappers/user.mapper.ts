@@ -1,7 +1,8 @@
-import { AbstractMapper } from '@repo/shared-kernel/infrastructure'
-import { UniqueEntityId, Email } from '@repo/shared-kernel/domain'
+import { AbstractMapper } from '@repo/shared-kernel'
+import { UniqueEntityId, Email } from '@repo/shared-kernel'
 import { User } from '../../domain/user.js'
-import { PasswordHash, Role } from '../../domain/value-objects/index.js'
+import { PasswordHash } from '../../domain/value-objects/password-hash.js'
+import { Role } from '../../domain/value-objects/role.js'
 import type { UserProfileDTO } from '../../application/dtos/user-profile.dto.js'
 import type { UserPersistence } from '../repositories/user-persistence.js'
 

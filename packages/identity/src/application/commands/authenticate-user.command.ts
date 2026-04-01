@@ -1,4 +1,4 @@
-import type { ICommand } from '@repo/shared-kernel/application'
+import type { ICommand } from '@repo/shared-kernel'
 
 export interface AuthenticateUserCommand extends ICommand {
   readonly commandName: 'IDENTITY.AUTHENTICATE_USER'
