@@ -1,4 +1,4 @@
-import type { Result, IClock, UniqueEntityId, ITenantProvider } from '@repo/shared-kernel'
+import type { Result, IClock, UniqueEntityId, ITenantProvider, IDomainEventDispatcher } from '@repo/shared-kernel'
 import { Result as R, TenantId } from '@repo/shared-kernel'
 import { Poll } from '../../domain/poll.js'
 import type { IPollRepository } from '../../domain/repositories/poll-repository.js'
@@ -14,6 +14,7 @@ export class CreatePollHandler {
     private readonly pollRepository: IPollRepository,
     private readonly clock: IClock,
     private readonly tenantProvider: ITenantProvider,
+    private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
   async execute(command: CreatePollCommand): Promise<Result<UniqueEntityId, Error>> {
@@ -37,6 +38,7 @@ export class CreatePollHandler {
     })
 
     await this.pollRepository.save(poll)
+    await this.eventDispatcher.dispatchAll(poll.pullDomainEvents())
 
     return R.ok(poll.id)
   }

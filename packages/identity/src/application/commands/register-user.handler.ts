@@ -1,4 +1,4 @@
-import type { Result, ITenantProvider } from '@repo/shared-kernel'
+import type { Result, ITenantProvider, IDomainEventDispatcher, IClock } from '@repo/shared-kernel'
 import { Result as R, Email, TenantId } from '@repo/shared-kernel'
 import type { ICommandHandler } from '@repo/shared-kernel'
 import type { DomainError } from '@repo/shared-kernel'
@@ -9,7 +9,6 @@ import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists-
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { IPasswordHasher } from '../../domain/services/password-hasher.js'
 import { UserDtoMapper } from '../mappers/user-dto.mapper.js'
-import type { IClock } from '@repo/shared-kernel'
 import type { RegisterUserCommand } from './register-user.command.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
 
@@ -32,6 +31,7 @@ export class RegisterUserHandler
     private readonly passwordHasher: IPasswordHasher,
     private readonly clock: IClock,
     private readonly tenantProvider: ITenantProvider,
+    private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
   async handle(
@@ -73,6 +73,7 @@ export class RegisterUserHandler
 
     // 6. Persistir
     await this.userRepository.save(user)
+    await this.eventDispatcher.dispatchAll(user.pullDomainEvents())
 
     // 7. Retornar DTO via Application Mapper
     return R.ok(UserDtoMapper.instance.toDTO(user))

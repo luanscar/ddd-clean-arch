@@ -1,4 +1,4 @@
-import type { Result, IClock, UniqueEntityId, DomainError, ITenantProvider } from '@repo/shared-kernel'
+import type { Result, IClock, UniqueEntityId, DomainError, ITenantProvider, IDomainEventDispatcher } from '@repo/shared-kernel'
 import { Result as R, TenantId } from '@repo/shared-kernel'
 import type { TallyResult } from '../../domain/value-objects/tally-result.js'
 import type { IPollRepository } from '../../domain/repositories/poll-repository.js'
@@ -13,6 +13,7 @@ export class ClosePollHandler {
     private readonly pollRepository: IPollRepository,
     private readonly clock: IClock,
     private readonly tenantProvider: ITenantProvider,
+    private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
   async execute(command: ClosePollCommand): Promise<Result<TallyResult, DomainError | Error>> {
@@ -33,6 +34,7 @@ export class ClosePollHandler {
     }
 
     await this.pollRepository.save(poll)
+    await this.eventDispatcher.dispatchAll(poll.pullDomainEvents())
 
     return R.ok(result.value)
   }
