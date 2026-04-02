@@ -48,8 +48,8 @@ export * from './application/services/tenant-provider.js'
 // Application Ports & DTOs
 export * from './application/ports/logger.js'
 export * from './application/dtos/paginated.dto.js'
+export * from './application/dtos/link-dto.js'
 
-// Infrastructure
+// Infrastructure contracts (mapper ports consumidos pelos bounded contexts)
 export * from './infrastructure/mapper.js'
-export * from './infrastructure/services/system-clock.js'
-export * from './infrastructure/services/console-logger.js'
+
