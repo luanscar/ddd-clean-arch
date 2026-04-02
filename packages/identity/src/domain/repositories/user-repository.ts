@@ -1,5 +1,5 @@
 import type { IRepository } from '@repo/shared-kernel'
-import type { Email, UniqueEntityId, TenantId } from '@repo/shared-kernel'
+import type { Email, UniqueEntityId, TenantId, Cpf } from '@repo/shared-kernel'
 import type { User } from '../user.js'
 
 /**
@@ -11,9 +11,10 @@ import type { User } from '../user.js'
  * A implementação concreta (Prisma, TypeORM, in-memory) fica em `infrastructure/`.
  */
 export interface IUserRepository extends IRepository<User, UniqueEntityId> {
-  /**
-   * Busca um usuário pelo endereço de e-mail.
-   * Retorna `null` se não encontrado (sem lançar NotFoundError — decisão da use case).
-   */
   findByEmail(email: Email, tenantId: TenantId): Promise<User | null>
+
+  /**
+   * Busca um usuário pelo CPF.
+   */
+  findByCpf(cpf: Cpf, tenantId: TenantId): Promise<User | null>
 }

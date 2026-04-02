@@ -1,16 +1,19 @@
 import type { User } from '../../domain/user.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
-import type { IDtoMapper } from '@repo/shared-kernel'
 
 /**
- * UserDtoMapper — Converte o Agregado User em um Perfil de Saída (DTO).
- * Reside na camada de Aplicação porque define o que é exposto para a API.
+ * UserDtoMapper — Converte o Agregado User em um Data Transfer Object (DTO).
+ * Protege o domínio de vazamento de dados sensíveis (senhas, regras internas).
  */
-export class UserDtoMapper implements IDtoMapper<User, UserProfileDTO> {
+export class UserDtoMapper {
+  /**
+   * Domain Model → Application DTO
+   */
   toDTO(user: User): UserProfileDTO {
     return {
       id: user.id.value,
-      email: user.email.value,
+      email: user.email?.value,
+      cpf: user.cpf?.formatted, // Retorna formatado para o front-end facilitar a leitura
       role: user.role.value,
       status: user.status,
       createdAt: user.createdAt.toISOString(),

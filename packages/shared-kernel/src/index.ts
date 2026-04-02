@@ -25,6 +25,7 @@ export * from './domain/composite-specification.js'
 // Domain Value Objects (Standard)
 export * from './domain/value-objects/tenant-id.js'
 export * from './domain/value-objects/unique-entity-id.js'
+export * from './domain/value-objects/cpf.js'
 export * from './domain/value-objects/email.js'
 export * from './domain/value-objects/money.js'
 export * from './domain/value-objects/pagination.js'

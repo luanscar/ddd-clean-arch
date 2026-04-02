@@ -9,7 +9,8 @@ import type { UserStatusValue } from '../../domain/user-status.js'
  */
 export interface UserProfileDTO {
   readonly id: string
-  readonly email: string
+  readonly email?: string
+  readonly cpf?: string
   readonly role: UserRoleValue
   readonly status: UserStatusValue
   readonly createdAt: string  // ISO 8601

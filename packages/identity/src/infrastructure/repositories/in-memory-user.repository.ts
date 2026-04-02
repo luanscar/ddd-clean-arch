@@ -1,4 +1,4 @@
-import type { UniqueEntityId, Email, TenantId } from '@repo/shared-kernel'
+import type { UniqueEntityId, Email, TenantId, Cpf } from '@repo/shared-kernel'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { User } from '../../domain/user.js'
 import type { UserPersistence } from './user-persistence.js'
@@ -14,6 +14,15 @@ export class InMemoryUserRepository implements IUserRepository {
   async findByEmail(email: Email, tenantId: TenantId): Promise<User | null> {
     for (const userRaw of this.users.values()) {
       if (userRaw.email === email.value && userRaw.tenantId === tenantId.value) {
+        return this.mapper.toDomain(userRaw)
+      }
+    }
+    return null
+  }
+
+  async findByCpf(cpf: Cpf, tenantId: TenantId): Promise<User | null> {
+    for (const userRaw of this.users.values()) {
+      if (userRaw.cpf === cpf.value && userRaw.tenantId === tenantId.value) {
         return this.mapper.toDomain(userRaw)
       }
     }

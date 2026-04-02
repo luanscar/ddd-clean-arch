@@ -5,6 +5,7 @@ export * from './domain/user-status.js'
 // Domain Value Objects
 export * from './domain/value-objects/password-hash.js'
 export * from './domain/value-objects/role.js'
+export * from './domain/value-objects/pin.js'
 
 // Domain Events
 export * from './domain/events/user-registered-event.js'
@@ -31,6 +32,9 @@ export * from './application/commands/register-user.command.js'
 export * from './application/commands/register-user.handler.js'
 export * from './application/commands/authenticate-user.command.js'
 export * from './application/commands/authenticate-user.handler.js'
+export * from './application/commands/cpf-auth.command.js'
+export * from './application/commands/register-user-with-cpf.handler.js'
+export * from './application/commands/authenticate-with-cpf.handler.js'
 
 // Application Queries
 export * from './application/queries/get-user-profile.query.js'

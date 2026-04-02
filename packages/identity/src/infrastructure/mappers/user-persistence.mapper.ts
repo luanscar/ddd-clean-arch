@@ -1,4 +1,4 @@
-import { UniqueEntityId, Email, TenantId } from '@repo/shared-kernel'
+import { UniqueEntityId, Email, TenantId, Cpf } from '@repo/shared-kernel'
 import type { IPersistenceMapper } from '@repo/shared-kernel'
 import { User } from '../../domain/user.js'
 import { PasswordHash } from '../../domain/value-objects/password-hash.js'
@@ -15,18 +15,21 @@ export class UserPersistenceMapper implements IPersistenceMapper<User, UserPersi
    */
   toDomain(raw: UserPersistence): User {
     const id = UniqueEntityId.reconstruct(raw.id)
-    const emailResult = Email.create(raw.email)
     const roleResult = Role.create(raw.role)
-
-    if (!emailResult.ok || !roleResult.ok) {
-      throw new Error(`[UserPersistenceMapper] Database corruption: invalid data for user ${raw.id}`)
-    }
-
     const tenantId = TenantId.reconstruct(raw.tenantId)
 
+    if (!roleResult.ok) {
+      throw new Error(`[UserPersistenceMapper] Database corruption: invalid role for user ${raw.id}`)
+    }
+
+    const email = raw.email ? Email.create(raw.email).value : undefined
+    const cpf = raw.cpf ? Cpf.reconstruct(raw.cpf) : undefined
+
     return User.reconstitute(id, tenantId, {
-      email: emailResult.value,
-      passwordHash: PasswordHash.fromHash(raw.passwordHash),
+      email,
+      passwordHash: raw.passwordHash ? PasswordHash.fromHash(raw.passwordHash) : undefined,
+      cpf,
+      pinHash: raw.pinHash ? PasswordHash.fromHash(raw.pinHash) : undefined,
       role: roleResult.value,
       status: raw.status,
       createdAt: raw.createdAt,
@@ -42,8 +45,10 @@ export class UserPersistenceMapper implements IPersistenceMapper<User, UserPersi
     return {
       id: user.id.value,
       tenantId: user.tenantId.value,
-      email: user.email.value,
-      passwordHash: user.passwordHash.value,
+      email: user.email?.value,
+      passwordHash: user.passwordHash?.value,
+      cpf: user.cpf?.value,
+      pinHash: user.pinHash?.value,
       role: user.role.value,
       status: user.status,
       createdAt: user.createdAt,
