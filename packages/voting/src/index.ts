@@ -16,12 +16,14 @@ export { AlreadyVotedError } from './domain/errors/already-voted-error.js'
 export { InvalidOptionError } from './domain/errors/invalid-option-error.js'
 export { InvalidPollStateError } from './domain/errors/invalid-poll-state-error.js'
 export { PollNotOpenError } from './domain/errors/poll-not-open-error.js'
+export { HasNotVotedError } from './domain/errors/has-not-voted-error.js'
 
 // Events
 export { PollCreatedEvent } from './domain/events/poll-created-event.js'
 export { PollOpenedEvent } from './domain/events/poll-opened-event.js'
 export { PollClosedEvent } from './domain/events/poll-closed-event.js'
 export { VoteCastEvent } from './domain/events/vote-cast-event.js'
+export { VoteChangedEvent } from './domain/events/vote-changed-event.js'
 
 // Repositories
 export type { IPollRepository, FindPollsParams } from './domain/repositories/poll-repository.js'
@@ -49,6 +51,9 @@ export type { OpenPollCommand } from './application/commands/open-poll.handler.j
 
 export { ClosePollHandler } from './application/commands/close-poll.handler.js'
 export type { ClosePollCommand } from './application/commands/close-poll.handler.js'
+
+export { ChangeVoteHandler } from './application/commands/change-vote.handler.js'
+export type { ChangeVoteCommand } from './application/commands/change-vote.handler.js'
 
 // Query Handlers
 export { GetPollByIdHandler } from './application/queries/get-poll-by-id.handler.js'

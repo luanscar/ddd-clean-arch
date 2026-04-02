@@ -3,6 +3,7 @@ import { Result as R, AggregateRoot, UniqueEntityId, TenantId } from '@repo/shar
 import { PropositionStatus } from './value-objects/proposition-status.js'
 import { PropositionSubmittedEvent } from './events/proposition-submitted.event.js'
 import { PropositionFinalizedEvent } from './events/proposition-finalized.event.js'
+import { InvalidPropositionStateError } from './errors/invalid-proposition-state-error.js'
 import * as crypto from 'node:crypto'
 
 interface PropositionState {
@@ -68,17 +69,7 @@ export class Proposition extends AggregateRoot<UniqueEntityId> {
       updatedAt: props.now,
     }
 
-    const proposition = new Proposition(id, props.tenantId, state)
-    
-    proposition.addDomainEvent(new PropositionSubmittedEvent(
-      id,
-      props.authorId,
-      props.title,
-      props.description,
-      props.now
-    ))
-
-    return proposition
+    return new Proposition(id, props.tenantId, state)
   }
 
   /**
@@ -90,18 +81,33 @@ export class Proposition extends AggregateRoot<UniqueEntityId> {
 
   // ─── Comportamento de Domínio ───────────────────────────────────────────────
 
-  submitForReview(now: Date): Result<void, Error> {
+  submitForReview(now: Date): Result<void, InvalidPropositionStateError> {
     if (this._state.status.value !== 'DRAFT') {
-      return R.fail(new Error('Only Draft propositions can be submitted for review'))
+      return R.fail(
+        new InvalidPropositionStateError('Only Draft propositions can be submitted for review'),
+      )
     }
     this._state.status = PropositionStatus.underReview()
     this._state.updatedAt = now
+    this.addDomainEvent(
+      new PropositionSubmittedEvent(
+        this.id,
+        this._state.authorId,
+        this._state.title,
+        this._state.description,
+        now,
+      ),
+    )
     return R.ok(undefined)
   }
 
-  startVoting(pollId: UniqueEntityId, now: Date): Result<void, Error> {
+  startVoting(pollId: UniqueEntityId, now: Date): Result<void, InvalidPropositionStateError> {
     if (!this._state.status.canStartVoting()) {
-      return R.fail(new Error(`Proposition "${this.title}" is not ready for voting (Current: ${this.status.value})`))
+      return R.fail(
+        new InvalidPropositionStateError(
+          `Proposition "${this.title}" is not ready for voting (Current: ${this.status.value})`,
+        ),
+      )
     }
     this._state.status = PropositionStatus.voting()
     this._state.pollId = pollId
@@ -109,9 +115,11 @@ export class Proposition extends AggregateRoot<UniqueEntityId> {
     return R.ok(undefined)
   }
 
-  finalize(approved: boolean, now: Date): Result<void, Error> {
+  finalize(approved: boolean, now: Date): Result<void, InvalidPropositionStateError> {
     if (this._state.status.value !== 'VOTING') {
-      return R.fail(new Error('Only propositions currently in voting can be finalized'))
+      return R.fail(
+        new InvalidPropositionStateError('Only propositions currently in voting can be finalized'),
+      )
     }
     this._state.status = approved ? PropositionStatus.approved() : PropositionStatus.rejected()
     this._state.updatedAt = now

@@ -1,11 +1,14 @@
-import type { Result, UniqueEntityId, ITenantProvider, IDomainEventDispatcher } from '@repo/shared-kernel'
-import { Result as R, TenantId } from '@repo/shared-kernel'
+import type { Result, UniqueEntityId, ITenantProvider, IDomainEventDispatcher, DomainError } from '@repo/shared-kernel'
+import { Result as R, TenantId, NotFoundError, ValidationError } from '@repo/shared-kernel'
 import { Proposition } from '../../domain/proposition.js'
 import type { IPropositionRepository } from '../../domain/repositories/proposition-repository.js'
 import type { IParliamentarianRepository } from '../../domain/repositories/parliamentarian-repository.js'
 
 export interface SubmitPropositionCommand {
-  authorId: UniqueEntityId  // ParliamentaryId
+  /** ID do agregado Parliamentarian (autor explícito). */
+  authorId?: UniqueEntityId
+  /** ID do utilizador Identity — resolve o parlamentar por `findByUserId` (fluxo JWT). */
+  authorUserId?: UniqueEntityId
   title: string
   description: string
   tenantId?: string
@@ -24,20 +27,31 @@ export class SubmitPropositionHandler {
     private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
-  async execute(command: SubmitPropositionCommand): Promise<Result<UniqueEntityId, Error>> {
+  async execute(command: SubmitPropositionCommand): Promise<Result<UniqueEntityId, DomainError>> {
     const tenantId = command.tenantId
       ? TenantId.reconstruct(command.tenantId)
       : this.tenantProvider.getTenantId()
 
-    // 1. Verificar autor
-    const author = await this.parliamentarianRepository.findById(command.authorId, tenantId)
-    if (!author) {
-      return R.fail(new Error(`Parliamentarian with id ${command.authorId.toString()} not found in this tenant`))
+    let authorParliamentaryId: UniqueEntityId
+    if (command.authorUserId) {
+      const byUser = await this.parliamentarianRepository.findByUserId(command.authorUserId, tenantId)
+      if (!byUser) {
+        return R.fail(new NotFoundError('Parliamentarian', command.authorUserId.toString()))
+      }
+      authorParliamentaryId = byUser.id
+    } else if (command.authorId) {
+      const byId = await this.parliamentarianRepository.findById(command.authorId, tenantId)
+      if (!byId) {
+        return R.fail(new NotFoundError('Parliamentarian', command.authorId.toString()))
+      }
+      authorParliamentaryId = command.authorId
+    } else {
+      return R.fail(new ValidationError('Informe authorUserId ou authorId'))
     }
 
     // 2. Criar Agregado (Default: DRAFT)
     const proposition = Proposition.create({
-      authorId: command.authorId,
+      authorId: authorParliamentaryId,
       title: command.title,
       description: command.description,
       tenantId,

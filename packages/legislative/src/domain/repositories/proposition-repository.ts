@@ -12,5 +12,5 @@ export interface FindPropositionsParams {
 
 export interface IPropositionRepository extends IRepository<Proposition, UniqueEntityId> {
   findMany(params: FindPropositionsParams): Promise<PaginatedDTO<Proposition>>
-  findByPollId(pollId: UniqueEntityId): Promise<Proposition | null>
+  findByPollId(pollId: UniqueEntityId, tenantId: TenantId): Promise<Proposition | null>
 }

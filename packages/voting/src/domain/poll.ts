@@ -6,6 +6,7 @@ import { createPollOption, type PollOption } from './value-objects/poll-option.j
 import type { TallyResult } from './value-objects/tally-result.js'
 import { Vote } from './vote.js'
 import { AlreadyVotedError } from './errors/already-voted-error.js'
+import { HasNotVotedError } from './errors/has-not-voted-error.js'
 import { PollNotOpenError } from './errors/poll-not-open-error.js'
 import { InvalidOptionError } from './errors/invalid-option-error.js'
 import { InvalidPollStateError } from './errors/invalid-poll-state-error.js'
@@ -14,6 +15,7 @@ import * as crypto from 'node:crypto'
 import { PollOpenedEvent } from './events/poll-opened-event.js'
 import { PollClosedEvent } from './events/poll-closed-event.js'
 import { VoteCastEvent } from './events/vote-cast-event.js'
+import { VoteChangedEvent } from './events/vote-changed-event.js'
 
 export interface PollState {
   title: string
@@ -150,6 +152,50 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
   }
 
   /**
+   * Altera o voto de um eleitor que já votou, apenas com urna aberta (ex.: requisito legislativo).
+   * Se a nova opção for igual à atual, não emite evento.
+   */
+  changeVote(
+    voterId: UniqueEntityId,
+    optionRaw: string,
+    now: Date,
+  ): Result<void, DomainError> {
+    if (this._state.status !== PollStatus.OPEN) {
+      return R.fail(new PollNotOpenError(this.id.toString(), this._state.status))
+    }
+
+    const optionResult = createPollOption(optionRaw)
+    if (!optionResult.ok) {
+      return R.fail(optionResult.error)
+    }
+    const option = optionResult.value
+
+    if (!this._state.allowedOptions.includes(option)) {
+      return R.fail(new InvalidOptionError(optionRaw, this._state.allowedOptions))
+    }
+
+    const idx = this._state.votes.findIndex((v) => v.voterId.equals(voterId))
+    if (idx === -1) {
+      return R.fail(new HasNotVotedError(voterId.toString(), this.id.toString()))
+    }
+
+    const previousOption = this._state.votes[idx]!.option
+    if (previousOption === option) {
+      return R.ok(undefined)
+    }
+
+    const newVote = Vote.cast({
+      voterId,
+      option,
+      occurredOn: now,
+    })
+    this._state.votes[idx] = newVote
+
+    this.addDomainEvent(new VoteChangedEvent(this.id, voterId, previousOption, option, now))
+    return R.ok(undefined)
+  }
+
+  /**
    * Encerra a votação e contabiliza os votos, retornando o Tally final.
    */
   close(now: Date): Result<TallyResult, DomainError> {
@@ -169,7 +215,7 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
 
     const tally = this.computeTally()
 
-    this.addDomainEvent(new PollClosedEvent(this.id, tally, now))
+    this.addDomainEvent(new PollClosedEvent(this.id, this.tenantId, tally, now))
     return R.ok(tally)
   }
 

@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto'
 import { AggregateRoot, UniqueEntityId, TenantId } from '@repo/shared-kernel'
 
 interface DeliberativeSessionState {

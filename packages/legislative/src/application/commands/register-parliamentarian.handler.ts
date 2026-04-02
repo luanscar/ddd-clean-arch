@@ -1,5 +1,5 @@
-import type { Result, UniqueEntityId, ITenantProvider, IDomainEventDispatcher } from '@repo/shared-kernel'
-import { Result as R, TenantId } from '@repo/shared-kernel'
+import type { Result, UniqueEntityId, ITenantProvider, IDomainEventDispatcher, DomainError } from '@repo/shared-kernel'
+import { Result as R, TenantId, ConflictError } from '@repo/shared-kernel'
 import { Parliamentarian } from '../../domain/parliamentarian.js'
 import { ParliamentaryRole } from '../../domain/value-objects/parliamentary-role.js'
 import type { IParliamentarianRepository } from '../../domain/repositories/parliamentarian-repository.js'
@@ -24,15 +24,14 @@ export class RegisterParliamentarianHandler {
     private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
-  async execute(command: RegisterParliamentarianCommand): Promise<Result<UniqueEntityId, Error>> {
+  async execute(command: RegisterParliamentarianCommand): Promise<Result<UniqueEntityId, DomainError>> {
     const tenantId = command.tenantId
       ? TenantId.reconstruct(command.tenantId)
       : this.tenantProvider.getTenantId()
 
-    // 1. Verificar se ja existe parlamentar p/ esse user nesse tenant
     const existing = await this.parliamentarianRepository.findByUserId(command.userId, tenantId)
     if (existing) {
-      return R.fail(new Error(`User already registered as a parliamentarian for this tenant`))
+      return R.fail(new ConflictError('Parliamentarian', 'userId', command.userId.toString()))
     }
 
     // 2. Criar Role

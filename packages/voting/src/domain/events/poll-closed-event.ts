@@ -1,5 +1,5 @@
 import { DomainEvent } from '@repo/shared-kernel'
-import type { UniqueEntityId } from '@repo/shared-kernel'
+import type { UniqueEntityId, TenantId } from '@repo/shared-kernel'
 import type { TallyResult } from '../value-objects/tally-result.js'
 
 export class PollClosedEvent extends DomainEvent {
@@ -7,6 +7,7 @@ export class PollClosedEvent extends DomainEvent {
 
   constructor(
     public readonly pollId: UniqueEntityId,
+    public readonly tenantId: TenantId,
     public readonly finalTally: TallyResult,
     readonly occurredOn: Date,
   ) {
@@ -16,6 +17,7 @@ export class PollClosedEvent extends DomainEvent {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
+      tenantId: this.tenantId.value,
       finalTally: this.finalTally,
     }
   }

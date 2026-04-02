@@ -17,7 +17,7 @@ export class PropositionSubmittedEvent extends DomainEvent {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      authorId: this.authorId,
+      authorId: this.authorId.toString(),
       title: this.title,
       description: this.description,
     }

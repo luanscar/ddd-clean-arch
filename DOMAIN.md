@@ -19,32 +19,35 @@ O sistema utiliza um **Shared Kernel** para garantir a consistência da identida
 
 ```mermaid
 graph TD
-    SK[Shared Kernel: Multi-Tenancy & Base Models]
-    
-    subgraph "Bounded Context: Identity"
+    SK[Shared Kernel: Multi-Tenancy e modelos base]
+
+    subgraph identityCtx [Bounded Context: Identity]
         User[User Aggregate]
     end
 
-    subgraph "Bounded Context: Voting (Motor)"
+    subgraph votingCtx [Bounded Context: Voting - Motor]
         Poll[Poll Aggregate]
-        Vote[Vote Entity]
+        VoteEnt[Vote Entity]
     end
 
-    subgraph "Bounded Context: Legislative (Planned)"
-        Law[Law/Bill Context]
+    subgraph legislativeCtx [Bounded Context: Legislative]
+        DS[DeliberativeSession]
+        Prop[Proposition]
     end
 
-    SK -- "Shared Architecture" --> Identity
-    SK -- "Shared Architecture" --> Voting
-    
-    Identity -- "Customer-Supplier" --> Voting
-    Legislative -- "Conformist/ACL" --> Voting
+    SK --> identityCtx
+    SK --> votingCtx
+    SK --> legislativeCtx
+
+    identityCtx -->|Customer-Supplier| votingCtx
+    identityCtx -->|Customer-Supplier| legislativeCtx
+    legislativeCtx -->|Conformist / ACL + Port| votingCtx
 ```
 
 ### Relação entre Contextos
 - **Shared Kernel**: Provê `TenantId`, `AggregateRoot` e `UniqueEntityId`. Essencial para o isolamento.
 - **Identity -> Voting**: O contexto de Voting consome a identidade verificada do eleitor.
-- **Legislative -> Voting**: O contexto legislativo (em planejamento) usará o motor de votação para decidir o destino de Projetos de Lei.
+- **Legislative -> Voting**: O contexto legislativo orquestra a abertura de votação sobre **Proposições** via porta de aplicação (ex.: `ICreateLegislativePoll`); o motor mantém **Poll**, **Vote** e **Tally**. Sincronização de resultado (ex.: proposição finalizada) pode ocorrer por handler de integração.
 
 ## 3. Modelo de Tenancy e Isolamento
 
@@ -59,7 +62,9 @@ O sistema adota o modelo de **Isolamento Lógico (Shared Database)**.
 | Termo (PT-BR) | Termo (Código) | Definição |
 | :--- | :--- | :--- |
 | **Inquilino** | `Tenant` | Uma organização isolada (ex: Câmara, Conselho, Associação). |
-| **Pauta / Sessão** | `Poll` | O objeto central que define o que está sendo votado. |
+| **Sessão deliberativa** | `DeliberativeSession` | Evento que organiza a pauta de proposições e a condução na Câmara (presidente, ordem dos itens). |
+| **Proposição** | `Proposition` | Objeto legislativo em tramitação; pode ser associado a uma `Poll` quando entra em votação. |
+| **Pauta de votação (urna)** | `Poll` | No motor de votação: o que está aberto para receber cédulas (agnóstico ao tipo de projeto). |
 | **Opção de Voto** | `PollOption` | Uma escolha válida (ex: Sim, Não). |
 | **Parlamentar** | `Parliamentarian` | Usuário com poder deliberativo dentro de um Tenant. |
 | **Cédula** | `Vote` | O registro imutável de uma intenção de voto. |
@@ -81,7 +86,63 @@ O sistema adota o modelo de **Isolamento Lógico (Shared Database)**.
 
 ---
 
-## 7. Checklist de Conformidade DDD
+## 7. Stakeholders e perfis (mapeamento para contextos)
+
+Os perfis abaixo **não** são bounded contexts; indicam **quem** usa o sistema e **onde** vive a responsabilidade de negócio.
+
+| Perfil | Responsabilidade principal | Contexto(s) |
+| :--- | :--- | :--- |
+| **Presidência da Câmara** | Conduzir sessão, controlar votação e uso da palavra | **Legislative** (ritmo, ordem do dia, palavra); comanda fluxos que disparam **Voting** |
+| **Vereadores** | Presença, votar, acompanhar pauta, pedir palavra | **Legislative** + **Voting** (cédula) + **Identity** (quem é o parlamentar) |
+| **Secretaria / Módulo Controle** | Configurar sessão, expedientes, operação | **Legislative** (configuração e operação do dia); alinhamento com **Voting** via casos de uso |
+| **Administradores do sistema** | Utilizadores, cadastros, integrações | **Identity**; cadastros “da casa” em **Legislative**; wiring de integrações na **app (backend)** |
+| **Equipe técnica (contratada)** | Implantação, suporte, manutenção, formação | **Fora do modelo de domínio** (plataforma e operações) |
+| **População** | Painel público em tempo real, resultados | **Leitura**: projeções sobre **Voting** e **Legislative**; canais em tempo real na **infraestrutura / backend** |
+
+O **Módulo Controle** é, em geral, uma **superfície da aplicação** (papéis e telas), não um pacote de domínio com esse nome.
+
+## 8. Fluxo MVP — sessão deliberativa → votação → resultado
+
+Fluxo feliz alinhado ao desenho atual do pacote **legislative** e à integração com o motor **voting**:
+
+```mermaid
+sequenceDiagram
+    participant Sec as Secretaria / Controle
+    participant Leg as Legislative
+    participant Vote as Voting
+    participant Id as Identity
+
+    Sec->>Leg: Configura sessão e pauta (DeliberativeSession, Propositions)
+    Note over Leg: Presidente conduz ordem do dia (futuro: palavra, presença)
+    Leg->>Leg: StartPropositionVoting (comando)
+    Leg->>Vote: ICreateLegislativePoll (porta)
+    Vote-->>Leg: pollId
+    Id->>Vote: Eleitor autenticado (Customer-Supplier)
+    Vote->>Vote: Registo de cédulas e apuração
+    Vote-->>Leg: Evento / integração com resultado
+    Leg->>Leg: Atualizar estado da Proposition (ex.: finalizada)
+```
+
+**Backlog de produto sugerido** (para detalhar requisitos por iteração):
+
+1. **Legislative**: criar/editar sessão deliberativa e proposições na pauta; comando de abertura de votação já modelado (`StartPropositionVoting`).
+2. **Voting**: manter invariantes de urna; expor leitura para painel conforme política de transparência.
+3. **Integração**: sincronizar resultado da `Poll` com o estado da `Proposition` (padrão já referenciado por handlers de evento).
+4. **Painel público**: tempo real e nominal/agregado — decisão de produto + implementação na app (não no núcleo DDD).
+
+## 9. Decisões de fronteira (Legislative ↔ Voting)
+
+| Decisão | Recomendação |
+| :--- | :--- |
+| Dono de “sessão aberta”, “item em votação” | **Legislative** (`DeliberativeSession`, `Proposition`). |
+| Dono de regras de urna e apuração | **Voting** (`Poll`, `Vote`, `Tally`). |
+| O que o Voting recebe da Legislative | Identificadores e opções mínimas via **porta**; evitar acoplar o motor a metadados legislativos pesados. |
+| Sincronização de resultado | **Integração**: eventos ou handlers de aplicação (ex.: proposição finalizada após fecho da poll), implementação concreta na composição (backend). |
+| Uso da palavra, presença, quórum | **Legislative** (subáreas da sessão); não misturar com agregados do motor. |
+
+---
+
+## 10. Checklist de Conformidade DDD
 
 Para garantir a saúde do projeto, seguimos rigorosamente este checklist:
 
@@ -90,6 +151,7 @@ Para garantir a saúde do projeto, seguimos rigorosamente este checklist:
 - [x] **Bounded Contexts**: Delimitados em pacotes NPM separados.
 - [x] **Context Map**: Visualizado na seção 2.
 - [x] **Subdomínios**: Identificados na seção 5.
+- [x] **Stakeholders e fluxo MVP**: Secções 7 e 8.
 
 ### Camada Tática
 - [x] **Entidades**: Identidade (`UniqueEntityId`) e comportamento encapsulado.
