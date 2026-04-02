@@ -35,6 +35,9 @@ export * from './application/commands/authenticate-user.handler.js'
 export * from './application/commands/cpf-auth.command.js'
 export * from './application/commands/register-user-with-cpf.handler.js'
 export * from './application/commands/authenticate-with-cpf.handler.js'
+export * from './application/commands/link-cpf.handler.js'
+export * from './application/commands/authenticate.command.js'
+export * from './application/commands/authenticate.handler.js'
 
 // Application Queries
 export * from './application/queries/get-user-profile.query.js'

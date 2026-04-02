@@ -15,7 +15,8 @@ export class UserRegisteredEvent extends DomainEvent {
 
   constructor(
     public readonly userId: UniqueEntityId,
-    public readonly email: Email,
+    public readonly email: Email | undefined,
+    public readonly cpf: string | undefined,
     public readonly role: UserRoleValue,
     readonly occurredOn: Date,
   ) {
@@ -25,7 +26,8 @@ export class UserRegisteredEvent extends DomainEvent {
   override toJSON(): Record<string, unknown> {
     return {
       ...super.toJSON(),
-      email: this.email.value,
+      email: this.email?.value,
+      cpf: this.cpf,
       role: this.role,
     }
   }

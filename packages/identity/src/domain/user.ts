@@ -85,11 +85,13 @@ export class User extends AggregateRoot<UniqueEntityId> {
   // ─── Factory Methods ───────────────────────────────────────────────────────
 
   /**
-   * Cria um novo usuário via E-mail e Senha.
+   * Cria um novo usuário via E-mail e Senha (opcionalmente com CPF/PIN).
    */
   static create(props: {
     email: Email
     passwordHash: PasswordHash
+    cpf?: Cpf
+    pinHash?: PasswordHash
     role?: Role
     tenantId: TenantId
     now: Date
@@ -99,6 +101,8 @@ export class User extends AggregateRoot<UniqueEntityId> {
     const state: UserState = {
       email: props.email,
       passwordHash: props.passwordHash,
+      cpf: props.cpf,
+      pinHash: props.pinHash,
       role: props.role ?? Role.member(),
       status: UserStatus.ACTIVE,
       createdAt: props.now,
@@ -108,7 +112,7 @@ export class User extends AggregateRoot<UniqueEntityId> {
     const user = new User(id, props.tenantId, state)
 
     user.addDomainEvent(
-      new UserRegisteredEvent(id, props.email, state.role.value, props.now),
+      new UserRegisteredEvent(id, props.email, props.cpf?.value, state.role.value, props.now),
     )
 
     return user
@@ -137,10 +141,8 @@ export class User extends AggregateRoot<UniqueEntityId> {
 
     const user = new User(id, props.tenantId, state)
 
-    // Nota: UserRegisteredEvent pode precisar ser expandido ou ter uma versão para CPF
-    // Por enquanto, usamos um marcador genérico no log se necessário.
     user.addDomainEvent(
-      new UserRegisteredEvent(id, { value: props.cpf.value } as any, state.role.value, props.now),
+      new UserRegisteredEvent(id, undefined, props.cpf.value, state.role.value, props.now),
     )
 
     return user
@@ -164,6 +166,19 @@ export class User extends AggregateRoot<UniqueEntityId> {
       return R.fail(new UserInactiveError())
     }
     this._state.passwordHash = newHash
+    this._state.updatedAt = now
+    return R.ok(undefined)
+  }
+
+  linkCpf(cpf: Cpf, pinHash: PasswordHash, now: Date): Result<void, Error> {
+    if (!this.isActive) {
+      return R.fail(new UserInactiveError())
+    }
+    if (this._state.cpf) {
+      return R.fail(new Error('User already has a CPF linked'))
+    }
+    this._state.cpf = cpf
+    this._state.pinHash = pinHash
     this._state.updatedAt = now
     return R.ok(undefined)
   }

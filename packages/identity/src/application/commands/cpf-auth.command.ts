@@ -16,3 +16,11 @@ export interface AuthenticateWithCpfCommand extends ICommand {
   readonly pin: string
   readonly tenantId?: string
 }
+
+export interface LinkCpfCommand extends ICommand {
+  readonly commandName: 'IDENTITY.LINK_CPF'
+  readonly userId: string
+  readonly cpf: string
+  readonly pin: string
+  readonly tenantId?: string
+}
