@@ -1,5 +1,5 @@
-import type { IRepository } from '@repo/shared-kernel'
-import type { Email, UniqueEntityId, TenantId, Cpf } from '@repo/shared-kernel'
+import type { IRepository, Pagination } from '@repo/shared-kernel'
+import type { UniqueEntityId, Email, TenantId, Cpf } from '@repo/shared-kernel'
 import type { User } from '../user.js'
 
 /**
@@ -17,4 +17,17 @@ export interface IUserRepository extends IRepository<User, UniqueEntityId> {
    * Busca um usuário pelo CPF.
    */
   findByCpf(cpf: Cpf, tenantId: TenantId): Promise<User | null>
+
+  /**
+   * Verifica se um usuário existe.
+   */
+  exists(id: UniqueEntityId, tenantId: TenantId): Promise<boolean>
+
+  /**
+   * Busca todos os usuários de um tenant com paginação.
+   */
+  findAll(
+    tenantId: TenantId,
+    pagination: Pagination,
+  ): Promise<{ users: User[]; total: number }>
 }

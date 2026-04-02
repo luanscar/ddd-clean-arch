@@ -1,4 +1,10 @@
-import type { UniqueEntityId, Email, TenantId, Cpf } from '@repo/shared-kernel'
+import type {
+  UniqueEntityId,
+  Email,
+  TenantId,
+  Cpf,
+  Pagination,
+} from '@repo/shared-kernel'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { User } from '../../domain/user.js'
 import type { UserPersistence } from './user-persistence.js'
@@ -32,7 +38,7 @@ export class InMemoryUserRepository implements IUserRepository {
   async findById(id: UniqueEntityId, tenantId: TenantId): Promise<User | null> {
     const raw = this.users.get(id.value)
     if (raw && raw.tenantId === tenantId.value) {
-        return this.mapper.toDomain(raw)
+      return this.mapper.toDomain(raw)
     }
     return null
   }
@@ -45,12 +51,30 @@ export class InMemoryUserRepository implements IUserRepository {
   async delete(id: UniqueEntityId, tenantId: TenantId): Promise<void> {
     const raw = this.users.get(id.value)
     if (raw && raw.tenantId === tenantId.value) {
-        this.users.delete(id.value)
+      this.users.delete(id.value)
     }
   }
 
   async exists(id: UniqueEntityId, tenantId: TenantId): Promise<boolean> {
     const raw = this.users.get(id.value)
     return !!raw && raw.tenantId === tenantId.value
+  }
+
+  async findAll(
+    tenantId: TenantId,
+    pagination: Pagination,
+  ): Promise<{ users: User[]; total: number }> {
+    const allTenantUsers = Array.from(this.users.values()).filter(
+      (u) => u.tenantId === tenantId.value,
+    )
+
+    const total = allTenantUsers.length
+    const offset = pagination.offset
+    const limit = pagination.limit
+
+    const paginatedRaws = allTenantUsers.slice(offset, offset + limit)
+    const users = paginatedRaws.map((raw) => this.mapper.toDomain(raw))
+
+    return { users, total }
   }
 }

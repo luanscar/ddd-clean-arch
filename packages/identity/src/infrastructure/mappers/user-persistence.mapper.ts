@@ -1,5 +1,5 @@
 import { UniqueEntityId, Email, TenantId, Cpf } from '@repo/shared-kernel'
-import type { IPersistenceMapper } from '@repo/shared-kernel'
+import type { IPersistenceMapper } from '@repo/shared-kernel/infrastructure/mapper.js'
 import { User } from '../../domain/user.js'
 import { PasswordHash } from '../../domain/value-objects/password-hash.js'
 import { Role } from '../../domain/value-objects/role.js'
@@ -22,8 +22,23 @@ export class UserPersistenceMapper implements IPersistenceMapper<User, UserPersi
       throw new Error(`[UserPersistenceMapper] Database corruption: invalid role for user ${raw.id}`)
     }
 
-    const email = raw.email ? Email.create(raw.email).value : undefined
-    const cpf = raw.cpf ? Cpf.reconstruct(raw.cpf) : undefined
+    let email: Email | undefined
+    if (raw.email) {
+      const emailResult = Email.create(raw.email)
+      if (!emailResult.ok) {
+        throw new Error(`[UserPersistenceMapper] Database corruption: invalid email for user ${raw.id}`)
+      }
+      email = emailResult.value
+    }
+
+    let cpf: Cpf | undefined
+    if (raw.cpf) {
+      const cpfResult = Cpf.create(raw.cpf)
+      if (!cpfResult.ok) {
+        throw new Error(`[UserPersistenceMapper] Database corruption: invalid CPF for user ${raw.id}`)
+      }
+      cpf = cpfResult.value
+    }
 
     return User.reconstitute(id, tenantId, {
       email,

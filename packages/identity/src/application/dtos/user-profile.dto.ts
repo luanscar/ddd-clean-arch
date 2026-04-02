@@ -1,3 +1,4 @@
+import type { HATEOASResource } from '@repo/shared-kernel'
 import type { UserRoleValue } from '../../domain/value-objects/role.js'
 import type { UserStatusValue } from '../../domain/user-status.js'
 
@@ -7,7 +8,7 @@ import type { UserStatusValue } from '../../domain/user-status.js'
  * Nunca expõe `passwordHash`. IDs são strings simples (sem Brand types)
  * para segurança de serialização JSON.
  */
-export interface UserProfileDTO {
+export interface UserProfileDTO extends HATEOASResource {
   readonly id: string
   readonly email?: string
   readonly cpf?: string

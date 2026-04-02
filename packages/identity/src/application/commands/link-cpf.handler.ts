@@ -1,10 +1,9 @@
 import type { Result, ITenantProvider, IDomainEventDispatcher, IClock } from '@repo/shared-kernel'
 import { Result as R, Cpf, TenantId, ValidationError, UniqueEntityId } from '@repo/shared-kernel'
 import type { ICommandHandler, DomainError } from '@repo/shared-kernel'
-import { User } from '../../domain/user.js'
 import { PasswordHash } from '../../domain/value-objects/password-hash.js'
 import { Pin } from '../../domain/value-objects/pin.js'
-import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists-error.js'
+import { UserCpfAlreadyExistsError } from '../../domain/errors/user-cpf-already-exists-error.js'
 import { NotFoundError } from '@repo/shared-kernel'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { IPasswordHasher } from '../../domain/services/password-hasher.js'
@@ -47,7 +46,7 @@ export class LinkCpfHandler
     // Verificar se o CPF já está em uso por outro usuário
     const existingCpf = await this.userRepository.findByCpf(cpf, tenantId)
     if (existingCpf !== null && existingCpf.id.value !== user.id.value) {
-      return R.fail(new UserAlreadyExistsError(`CPF ${command.cpf}`))
+      return R.fail(new UserCpfAlreadyExistsError(command.cpf))
     }
 
     const pinResult = Pin.create(command.pin)
@@ -58,7 +57,7 @@ export class LinkCpfHandler
 
     const linkResult = user.linkCpf(cpf, pinHash, this.clock.now())
     if (!linkResult.ok) {
-      return R.fail(new ValidationError(linkResult.error.message))
+      return R.fail(linkResult.error)
     }
 
     await this.userRepository.save(user)

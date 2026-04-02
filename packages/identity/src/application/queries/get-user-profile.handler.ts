@@ -2,6 +2,7 @@ import type { IQueryHandler, Result, ITenantProvider, DomainError } from '@repo/
 import { Result as R, UniqueEntityId, TenantId } from '@repo/shared-kernel'
 import { UserDtoMapper } from '../mappers/user-dto.mapper.js'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
+import { UserNotFoundError } from '../../domain/errors/user-not-found-error.js'
 import type { GetUserProfileQuery } from './get-user-profile.query.js'
 import type { UserProfileDTO } from '../dtos/user-profile.dto.js'
 
@@ -31,9 +32,7 @@ export class GetUserProfileHandler
 
     const user = await this.userRepository.findById(userIdResult.value, tenantId)
     if (!user) {
-      // Retornar um erro de domínio ou null dependendo da convenção. 
-      // Aqui vamos seguir a assinatura original que o usuário tinha (Result).
-      return R.fail({ message: 'User not found', code: 'USER_NOT_FOUND' } as any)
+      return R.fail(new UserNotFoundError(query.userId))
     }
 
     // Retorna DTO via Application Mapper

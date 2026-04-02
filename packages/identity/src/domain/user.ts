@@ -9,6 +9,8 @@ import { UserStatus } from './user-status.js'
 import { UserRegisteredEvent } from './events/user-registered-event.js'
 import { UserDeactivatedEvent } from './events/user-deactivated-event.js'
 import { UserInactiveError } from './errors/user-inactive-error.js'
+import { UserMustHaveIdentifierError } from './errors/user-must-have-identifier-error.js'
+import { UserCpfAlreadyLinkedError } from './errors/user-cpf-already-linked-error.js'
 import * as crypto from 'node:crypto'
 
 // ─── State interface (interna ao agregado) ────────────────────────────────────
@@ -40,7 +42,7 @@ export class User extends AggregateRoot<UniqueEntityId> {
 
   private validateInvariants(): void {
     if (!this._state.email && !this._state.cpf) {
-      throw new Error('User must have at least an email or a CPF')
+      throw new UserMustHaveIdentifierError()
     }
   }
 
@@ -170,12 +172,12 @@ export class User extends AggregateRoot<UniqueEntityId> {
     return R.ok(undefined)
   }
 
-  linkCpf(cpf: Cpf, pinHash: PasswordHash, now: Date): Result<void, Error> {
+  linkCpf(cpf: Cpf, pinHash: PasswordHash, now: Date): Result<void, UserInactiveError | UserCpfAlreadyLinkedError> {
     if (!this.isActive) {
       return R.fail(new UserInactiveError())
     }
     if (this._state.cpf) {
-      return R.fail(new Error('User already has a CPF linked'))
+      return R.fail(new UserCpfAlreadyLinkedError())
     }
     this._state.cpf = cpf
     this._state.pinHash = pinHash

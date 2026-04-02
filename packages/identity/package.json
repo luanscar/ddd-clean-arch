@@ -6,7 +6,30 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./infrastructure/*.js": {
+      "types": "./dist/infrastructure/*.d.ts",
+      "default": "./dist/infrastructure/*.js"
+    },
+    "./infrastructure/repositories/*.js": {
+      "types": "./dist/infrastructure/repositories/*.d.ts",
+      "default": "./dist/infrastructure/repositories/*.js"
+    },
+    "./infrastructure/mappers/*.js": {
+      "types": "./dist/infrastructure/mappers/*.d.ts",
+      "default": "./dist/infrastructure/mappers/*.js"
+    },
+    "./infrastructure/services/*.js": {
+      "types": "./dist/infrastructure/services/*.d.ts",
+      "default": "./dist/infrastructure/services/*.js"
+    },
+    "./application/*.js": {
+      "types": "./dist/application/*.d.ts",
+      "default": "./dist/application/*.js"
+    }
   },
   "scripts": {
     "build": "tsc",

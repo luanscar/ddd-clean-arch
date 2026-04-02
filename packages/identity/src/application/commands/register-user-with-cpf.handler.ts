@@ -5,7 +5,7 @@ import { User } from '../../domain/user.js'
 import { PasswordHash } from '../../domain/value-objects/password-hash.js'
 import { Role } from '../../domain/value-objects/role.js'
 import { Pin } from '../../domain/value-objects/pin.js'
-import { UserAlreadyExistsError } from '../../domain/errors/user-already-exists-error.js'
+import { UserCpfAlreadyExistsError } from '../../domain/errors/user-cpf-already-exists-error.js'
 import type { IUserRepository } from '../../domain/repositories/user-repository.js'
 import type { IPasswordHasher } from '../../domain/services/password-hasher.js'
 import { UserDtoMapper } from '../mappers/user-dto.mapper.js'
@@ -46,7 +46,7 @@ export class RegisterUserWithCpfHandler
 
     const existing = await this.userRepository.findByCpf(cpfResult.value, tenantId)
     if (existing !== null) {
-      return R.fail(new UserAlreadyExistsError(`CPF ${command.cpf}`))
+      return R.fail(new UserCpfAlreadyExistsError(command.cpf))
     }
 
     const hashedPin = await this.passwordHasher.hash(pinResult.value.value)

@@ -13,6 +13,9 @@ export * from './domain/events/user-deactivated-event.js'
 
 // Domain Errors
 export * from './domain/errors/user-already-exists-error.js'
+export * from './domain/errors/user-cpf-already-exists-error.js'
+export * from './domain/errors/user-cpf-already-linked-error.js'
+export * from './domain/errors/user-must-have-identifier-error.js'
 export * from './domain/errors/user-not-found-error.js'
 export * from './domain/errors/user-inactive-error.js'
 export * from './domain/errors/invalid-credentials-error.js'
@@ -40,11 +43,7 @@ export * from './application/commands/authenticate.command.js'
 export * from './application/commands/authenticate.handler.js'
 
 // Application Queries
-export * from './application/queries/get-user-profile.query.js'
-export * from './application/queries/get-user-profile.handler.js'
-
-// Infrastructure
-export * from './infrastructure/mappers/user-persistence.mapper.js'
-export * from './infrastructure/repositories/in-memory-user.repository.js'
-export * from './infrastructure/repositories/user-persistence.js'
-export * from './infrastructure/services/bcrypt-password-hasher.js'
+export { GetUserProfileHandler } from './application/queries/get-user-profile.handler.js'
+export type { GetUserProfileQuery } from './application/queries/get-user-profile.query.js'
+export { GetUsersHandler } from './application/queries/get-users.handler.js'
+export type { GetUsersQuery } from './application/queries/get-users.query.js'
