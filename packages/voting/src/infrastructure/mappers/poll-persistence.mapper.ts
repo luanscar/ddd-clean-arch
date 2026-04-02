@@ -4,24 +4,33 @@ import { Poll } from '../../domain/poll.js'
 import { Vote } from '../../domain/vote.js'
 import type { PollPersistence } from '../repositories/poll-persistence.js'
 import { createPollOption } from '../../domain/value-objects/poll-option.js'
+import type { PollOption } from '../../domain/value-objects/poll-option.js'
+
+function mustPollOption(raw: string): PollOption {
+  const r = createPollOption(raw)
+  if (!r.ok) {
+    throw r.error
+  }
+  return r.value
+}
 
 export class PollPersistenceMapper implements IPersistenceMapper<Poll, PollPersistence> {
   toDomain(raw: PollPersistence): Poll {
     const id = UniqueEntityId.reconstruct(raw.id)
     const tenantId = TenantId.reconstruct(raw.tenantId)
 
-    const votes = raw.votes.map((v) => 
+    const votes = raw.votes.map((v) =>
       Vote.reconstitute(UniqueEntityId.reconstruct(v.id), {
         voterId: UniqueEntityId.reconstruct(v.voterId),
-        option: createPollOption(v.option),
+        option: mustPollOption(v.option),
         occurredOn: v.castAt,
-      })
+      }),
     )
 
     return Poll.reconstitute(id, tenantId, {
       title: raw.title,
       status: raw.status,
-      allowedOptions: raw.allowedOptions.map(createPollOption),
+      allowedOptions: raw.allowedOptions.map(mustPollOption),
       votes,
       createdAt: raw.createdAt,
       openedAt: raw.openedAt,

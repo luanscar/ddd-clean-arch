@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto'
 import { Entity, UniqueEntityId } from '@repo/shared-kernel'
 import type { PollOption } from './value-objects/poll-option.js'
 

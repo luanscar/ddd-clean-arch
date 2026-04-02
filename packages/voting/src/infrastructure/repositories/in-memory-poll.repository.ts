@@ -42,7 +42,7 @@ export class InMemoryPollRepository implements IPollRepository {
     
     const paginationResult = Pagination.create(params.page, params.limit)
     if (!paginationResult.ok) {
-        throw new Error('Invalid pagination parameters')
+      throw paginationResult.error
     }
     const pagination = paginationResult.value
 

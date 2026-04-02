@@ -1,4 +1,4 @@
-import { AggregateRoot, UniqueEntityId, TenantId, DomainError } from '@repo/shared-kernel'
+import { AggregateRoot, UniqueEntityId, TenantId, DomainError, ValidationError } from '@repo/shared-kernel'
 import type { Result } from '@repo/shared-kernel'
 import { Result as R } from '@repo/shared-kernel'
 import { PollStatus } from './value-objects/poll-status.js'
@@ -55,11 +55,17 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
     allowedOptions: string[]
     tenantId: TenantId
     now: Date
-  }): Poll {
+  }): Result<Poll, ValidationError> {
     const id = UniqueEntityId.reconstruct(crypto.randomUUID())
 
-    const options = props.allowedOptions.map(createPollOption)
-    // Remove duplicatas e sanitiza
+    const options: PollOption[] = []
+    for (const raw of props.allowedOptions) {
+      const optResult = createPollOption(raw)
+      if (!optResult.ok) {
+        return R.fail(optResult.error)
+      }
+      options.push(optResult.value)
+    }
     const uniqueOptions = Array.from(new Set(options))
 
     const state: PollState = {
@@ -74,8 +80,8 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
 
     const poll = new Poll(id, props.tenantId, state)
     poll.addDomainEvent(new PollCreatedEvent(id, state.title, state.allowedOptions, props.now))
-    
-    return poll
+
+    return R.ok(poll)
   }
 
   /**
@@ -116,7 +122,11 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
       return R.fail(new PollNotOpenError(this.id.toString(), this._state.status))
     }
 
-    const option = createPollOption(optionRaw)
+    const optionResult = createPollOption(optionRaw)
+    if (!optionResult.ok) {
+      return R.fail(optionResult.error)
+    }
+    const option = optionResult.value
 
     if (!this._state.allowedOptions.includes(option)) {
       return R.fail(new InvalidOptionError(optionRaw, this._state.allowedOptions))
@@ -145,6 +155,13 @@ export class Poll extends AggregateRoot<UniqueEntityId> {
   close(now: Date): Result<TallyResult, DomainError> {
     if (this._state.status === PollStatus.CLOSED) {
       return R.fail(new InvalidPollStateError(`Poll is already closed.`))
+    }
+    if (this._state.status !== PollStatus.OPEN) {
+      return R.fail(
+        new InvalidPollStateError(
+          `Poll must be OPEN to close. Current status: ${this._state.status}.`,
+        ),
+      )
     }
 
     this._state.status = PollStatus.CLOSED

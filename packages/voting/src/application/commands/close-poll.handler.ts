@@ -1,5 +1,5 @@
 import type { Result, IClock, UniqueEntityId, DomainError, ITenantProvider, IDomainEventDispatcher } from '@repo/shared-kernel'
-import { Result as R, TenantId } from '@repo/shared-kernel'
+import { Result as R, TenantId, NotFoundError } from '@repo/shared-kernel'
 import type { TallyResult } from '../../domain/value-objects/tally-result.js'
 import type { IPollRepository } from '../../domain/repositories/poll-repository.js'
 
@@ -16,7 +16,7 @@ export class ClosePollHandler {
     private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
-  async execute(command: ClosePollCommand): Promise<Result<TallyResult, DomainError | Error>> {
+  async execute(command: ClosePollCommand): Promise<Result<TallyResult, DomainError>> {
     const tenantId = command.tenantId
       ? TenantId.reconstruct(command.tenantId)
       : this.tenantProvider.getTenantId()
@@ -24,7 +24,7 @@ export class ClosePollHandler {
     const poll = await this.pollRepository.findById(command.pollId, tenantId)
 
     if (!poll) {
-      return R.fail(new Error(`Poll with id ${command.pollId.toString()} not found`))
+      return R.fail(new NotFoundError('Poll', command.pollId.toString()))
     }
 
     const result = poll.close(this.clock.now())

@@ -1,5 +1,12 @@
-import type { Result, IClock, UniqueEntityId, DomainError, ITenantProvider } from '@repo/shared-kernel'
-import { Result as R, TenantId } from '@repo/shared-kernel'
+import type {
+  Result,
+  IClock,
+  UniqueEntityId,
+  DomainError,
+  ITenantProvider,
+  IDomainEventDispatcher,
+} from '@repo/shared-kernel'
+import { Result as R, TenantId, NotFoundError } from '@repo/shared-kernel'
 import type { IPollRepository } from '../../domain/repositories/poll-repository.js'
 
 export interface CastVoteCommand {
@@ -14,9 +21,10 @@ export class CastVoteHandler {
     private readonly pollRepository: IPollRepository,
     private readonly clock: IClock,
     private readonly tenantProvider: ITenantProvider,
+    private readonly eventDispatcher: IDomainEventDispatcher,
   ) {}
 
-  async execute(command: CastVoteCommand): Promise<Result<void, DomainError | Error>> {
+  async execute(command: CastVoteCommand): Promise<Result<void, DomainError>> {
     const tenantId = command.tenantId
       ? TenantId.reconstruct(command.tenantId)
       : this.tenantProvider.getTenantId()
@@ -24,7 +32,7 @@ export class CastVoteHandler {
     const poll = await this.pollRepository.findById(command.pollId, tenantId)
 
     if (!poll) {
-      return R.fail(new Error(`Poll with id ${command.pollId.toString()} not found`))
+      return R.fail(new NotFoundError('Poll', command.pollId.toString()))
     }
 
     const voteResult = poll.castVote(command.voterId, command.optionRaw, this.clock.now())
@@ -34,6 +42,7 @@ export class CastVoteHandler {
     }
 
     await this.pollRepository.save(poll)
+    await this.eventDispatcher.dispatchAll(poll.pullDomainEvents())
 
     return R.ok(undefined)
   }
