@@ -453,3 +453,5 @@ O inquilino segue o padrão dos outros e2e: cabeçalho **`x-tenant-id`** (ex.: `
 **Prisma P3005 (`migrate deploy` com schema “não vazio”):** `prisma db push` (incluindo `db:reset`) sincroniza o schema **sem** gravar histórico em `_prisma_migrations`. Depois disso, `migrate deploy` pode falhar. Para alinhar: use só **`migrate dev`** (dev) ou **`migrate deploy`** num banco vazio / já baselineado; ou faça [baseline](https://www.prisma.io/docs/guides/migrate/production-troubleshooting) se a BD já tiver as tabelas e você precisar adotar migrações sem dropar tudo.
 
 Repositórios **in-memory** nos pacotes `@repo/voting` e `@repo/legislative` permanecem para **testes unitários** dentro dos pacotes, não para compor a app Nest em dev/prod.
+
+**Backlog e marco Git:** [`backlog-mvp-proximos-passos.md`](backlog-mvp-proximos-passos.md) — tag anotada `mvp-sessao-votacao-backend-2026-04`.
