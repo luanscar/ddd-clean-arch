@@ -27,48 +27,49 @@ Este ficheiro liga o marco Git **`mvp-sessao-votacao-backend-2026-04`** ao traba
 ### 2. ADR — D1 e D2 (abertura de urna e consistência)
 
 - **Título:** `adr: quem abre urna (D1) e consistência legislative↔voting (D2)`
-- **Corpo:** Registar decisão em `docs/` ou `DOMAIN.md`: perfis que podem chamar abertura; mesma transação vs saga vs eventual para `StartPropositionVoting` + `ICreateLegislativePoll`. Depois ajustar guards/RBAC conforme ADR.
-- **Refs:** MVP §8 decisões pendentes
+- **Corpo:** O ADR deve **anexar** (no corpo da issue ou ficheiro `docs/adr/`) a **matriz ação × perfil** (tabela §2.4 em [`mvp-sessao-votacao.md`](mvp-sessao-votacao.md)) e a decisão de **delegação** Presidência vs operador de plenário. Referenciar também §2.3 (atos institucionais) e §2.5 (variância entre câmaras). **Estado atual:** D1 e D2 já estão decididos na secção 8 do mesmo ficheiro; o ADR formaliza, congela e liga à implementação de guards (`@Roles` / política por tenant para `allowPlenaryOperatorToOpenPoll` ou equivalente).
+- **Refs:** MVP §2, §8; implementação MVP-06
 
 ---
 
-### 3. MVP-05 — CRUD completo de parlamentares
+### 3. MVP-05 — CRUD completo de parlamentares _(fechado no backend)_
 
-- **Título:** `feat(legislative): CRUD parlamentares (update, desativação/suplência)`
-- **Corpo:** Completar além de `RegisterParliamentarian`: atualizar dados, política de soft delete, regras de suplência conforme Câmara; testes e rotas HTTP; isolamento por `TenantId`.
-- **Refs:** MVP-05, EDT-4.2.1.a
+- **Estado:** entregue — rotas `LegislativeParliamentariansController`, soft delete (`active`), `includeInactive` para staff, `GET .../:id` oculta inativos a não-staff. Ver `docs/mvp-sessao-votacao.md` MVP-05.
+- **Pós-MVP (nova issue):** regras de suplência específicas por cliente se exceder `ParliamentaryRole` + documentação.
 
 ---
 
-### 4. MVP-06 — Papéis ADMIN / OPERATOR e RBAC no backend
+### 4. MVP-06 — Papéis ADMIN / OPERATOR e RBAC no backend _(fechado no backend)_
 
-- **Título:** `feat(identity+backend): papéis admin/operador e matriz RBAC mínima`
-- **Corpo:** Modelar papéis no Identity; aplicar `@Roles()` ou equivalente nas rotas sensíveis (abrir/fechar urna, pauta, cadastros); documentar matriz mínima no MVP ou ADR.
-- **Refs:** MVP-06, EDT-4.2.1.b
+- **Estado:** entregue — `UserRole` + `@Roles`/`rbac.constants.ts`; `PATCH /v1/users/:userId` (`UpdateTenantUserHandler`) para papel/ativo; proteção do último admin. Matriz em MVP §2.4.
+- **Pós-MVP (nova issue):** ADR formal (item 2 deste backlog) e auditoria EDT-4.3.s.
 
 ---
 
 ### 5. MVP-08 — Ordem do dia rica (tipos, reordenação, expedientes)
 
-- **Título:** `feat(legislative): tipos de expediente, reordenar pauta, evoluir agenda`
-- **Corpo:** CRUD além de “adicionar proposição à sessão”: tipos de item (EDT-4.3.c), ordenação, regras de elegibilidade para MVP-01; queries para ordem do dia conforme critérios MVP-08. PDF/anexos (EDT-4.3.d) podem ficar sub-issue.
-- **Refs:** MVP-08, EDT-4.3.a,c + 4.4.a-c
+- **Estado:** entregue no backend (slice texto + anexos em bucket): `title`/`description` em `SessionAgendaItem`, rotas de pauta, `POST/GET .../agenda-items/:itemId/attachments` com S3-compatível (`S3_AGENDA_BUCKET` / `AWS_S3_BUCKET`, etc.).
+- **Pós-MVP:** UI de gestão de anexos, limites/NFR por tenant, antivirus em upload.
+- **Refs:** MVP-08, EDT-4.3.a,c,d + 4.4.a-c
 
 ---
 
-### 6. MVP-07 — Leitura / tempo real para painéis
+### 6. MVP-07 — Leitura / tempo real para painéis _(fechado no backend)_
 
-- **Título:** `feat: projeções + canal tempo real (SSE ou WebSocket) para votação`
-- **Corpo:** Definir canal (documentar em MVP §7); queries de leitura agregada/nominal conforme política LGPD; sem violar invariantes de escrita do Voting.
-- **Refs:** MVP-07, EDT-4.2.1.d, 4.6, 4.4.i
+- **Estado:** entregue — módulo `realtime` (snapshot público, SSE, nominal, fan-out por eventos de domínio). Ver `docs/mvp-sessao-votacao.md` §7 e §11.
+- **Pós-MVP (nova issue):** WebSocket ou Socket.IO + Redis pub/sub para múltiplas instâncias e ligações persistentes além do SSE unidirecional.
 
 ---
 
-### 7. MVP-09 — Relatórios e exportação básica
+### 7. MVP-09 — Relatórios e exportação básica _(em desenvolvimento)_
 
-- **Título:** `feat: relatórios sessão (PDF ou equivalente) e exportação`
-- **Corpo:** Relatórios por sessão/intervalo; isolamento por tenant e perfil; performance alvo a definir (NFR).
-- **Refs:** MVP-09, EDT-4.3.o, 4.7
+- **Estado:** **em desenvolvimento** — `GET /v1/legislative/sessions/:sessionId/report.pdf` em [`apps/backend/src/reports`](../apps/backend/src/reports); PDF inclui presenças quando há registos (`session_attendance`). Ver [`mvp-sessao-votacao.md`](mvp-sessao-votacao.md) §3 MVP-09 e §11.
+- **Pós-slice atual:** relatório por intervalo de datas; export EDT-4.7.e; NFR de geração.
+
+### 7b. Presença e quórum lean _(entregue no backend)_
+
+- **Rotas:** `GET/POST/DELETE .../sessions/:sessionId/attendance`, `GET .../quorum` (maioria simples dos ativos do tenant). Modelo `session_attendance`; presença parte do agregado `DeliberativeSession` na camada de domínio.
+- **Pós-MVP:** EDT-4.3.g formal (regras por regimento), biometria/PIN (EDT-4.4.f).
 
 ---
 

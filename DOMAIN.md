@@ -70,6 +70,8 @@ O sistema adota o modelo de **Isolamento Lógico (Shared Database)**.
 | **Cédula** | `Vote` | O registro imutável de uma intenção de voto. |
 | **Apuração** | `Tally` | O resultado consolidado de uma sessão. |
 
+**Presidente da sessão vs Presidente da Câmara:** no produto, **`PRESIDING_OFFICER`** refere-se ao **presidente da sessão deliberativa** em curso (vínculo típico: `DeliberativeSession.presidentId` → `Parliamentarian`). Na prática da Câmara, quem **preside** a sessão ordinária costuma ser o **Presidente da Câmara** ou um substituto regimental (Vice-Presidente ou outro vereador designado). O modelo de domínio **não** deve assumir que “Presidente da Câmara” (cargo na Mesa Diretora) é automaticamente o mesmo utilizador em **todas** as sessões ou em todos os atos do sistema — usar sempre o papel de sessão ou política por tenant para variância.
+
 ## 5. Classificação de Subdomínios
 
 1.  **Core Domain (Voting Motor)**: O motor de regras, invariantes e apuração.
