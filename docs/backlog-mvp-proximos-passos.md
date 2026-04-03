@@ -61,10 +61,10 @@ Este ficheiro liga o marco Git **`mvp-sessao-votacao-backend-2026-04`** ao traba
 
 ---
 
-### 7. MVP-09 — Relatórios e exportação básica _(em desenvolvimento)_
+### 7. MVP-09 — Relatórios e exportação básica _(entregue — escopo MVP a–d)_
 
-- **Estado:** **em desenvolvimento** — `GET /v1/legislative/sessions/:sessionId/report.pdf` em [`apps/backend/src/reports`](../apps/backend/src/reports); PDF inclui presenças quando há registos (`session_attendance`). Ver [`mvp-sessao-votacao.md`](mvp-sessao-votacao.md) §3 MVP-09 e §11.
-- **Pós-slice atual:** relatório por intervalo de datas; export EDT-4.7.e; NFR de geração.
+- **Estado:** entregue — `GET /v1/legislative/sessions/:sessionId/report.pdf` e `GET /v1/legislative/sessions/reports.pdf?from=&to=` em [`apps/backend/src/reports`](../apps/backend/src/reports); PDF inclui títulos de item na pauta, ausências em urnas fechadas (ativos sem voto), presenças quando há registos (`session_attendance`). Ver [`mvp-sessao-votacao.md`](mvp-sessao-votacao.md) §3 MVP-09 e §11.
+- **Pós-MVP:** exportação EDT-4.7.e; NFR detalhado de geração / limites operacionais.
 
 ### 7b. Presença e quórum lean _(entregue no backend)_
 

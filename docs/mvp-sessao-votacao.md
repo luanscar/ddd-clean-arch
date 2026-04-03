@@ -313,7 +313,7 @@ Consulta documental **não substitui** o RI da Câmara cliente; serve para alinh
 | **Gatilho** | Solicitação de relatório por sessão ou intervalo de datas |
 | **Resultado** | Arquivo imprimível (PDF) ou equivalente com votações, ausências na votação e presenças _(conforme dados disponíveis no MVP)_ |
 
-**Estado (backend):** **em desenvolvimento** — *slice 1* entregue: `GET /v1/legislative/sessions/:sessionId/report.pdf` (`SessionReportService` + `SessionReportPdfRenderer` em `apps/backend/src/reports`). Conteúdo atual: cabeçalho da sessão, pauta (inclui título de expediente quando existir), urnas ligadas com **apuração agregada** se `CLOSED`, e **bloco de presenças** quando houver registos em `session_attendance` (intervalo de datas / export externo — fases posteriores).
+**Estado (backend):** **entregue (MVP-09 escopo a–d)** — `GET /v1/legislative/sessions/:sessionId/report.pdf` e `GET /v1/legislative/sessions/reports.pdf?from=&to=` (`SessionReportService` + `SessionReportPdfRenderer` em `apps/backend/src/reports`). PDF por sessão: cabeçalho, pauta com **título do item** (`SessionAgendaItem.title`), urnas com apuração agregada se `CLOSED`, **ausências na votação** (parlamentares **ativos** do tenant sem registo de voto na urna fechada), presenças quando existirem. PDF por período: capa com intervalo e contagem; repete o bloco por sessão (ordenado por `date`) ou mensagem se não houver sessões; parâmetros `from`/`to` em ISO 8601, inclusivos, `from <= to`, máximo **366 dias**. **EDT-4.7.e** (export externo) permanece pós-MVP.
 
 **Critérios de aceitação:**
 
@@ -338,7 +338,7 @@ Opcional: coluna **EDT** com IDs da [seção 10](#10-rastreio-edital-edt--mvp).
 | MVP-06 | EDT-4.2.1.b | CRUD admins/operadores | identity + app | `User`, papéis | `UpdateTenantUserHandler`; `POST /v1/users` com `role` | RBAC (`@Roles`, `rbac.constants`) |
 | MVP-07 | EDT-4.2.1.d, 4.6, 4.4.i | Painel / tempo real / nominal | leitura + infra | projeções | `PollReadService` + SSE (`realtime`) | SSE + fallback polling (`GET /v1/polls/:id`) |
 | MVP-08 | EDT-4.3.a,c + 4.4.a-c | Ordem do dia / expedientes | legislative | `DeliberativeSession`, itens, presença, anexos | comandos pauta + presença + `AgendaItemAttachmentService` | bucket S3 |
-| MVP-09 | EDT-4.3.o + 4.7 | Relatórios / impressão | leitura + infra | — | `SessionReportService` + PDF (`reports`) | `GET .../sessions/:id/report.pdf`; fase 2: intervalo datas / export |
+| MVP-09 | EDT-4.3.o + 4.7 | Relatórios / impressão | leitura + infra | — | `SessionReportService` + PDF (`reports`) | `GET .../sessions/:id/report.pdf`; `GET .../sessions/reports.pdf?from&to`; pós-MVP: export EDT-4.7.e |
 
 ---
 
@@ -353,7 +353,7 @@ Preencha com os nomes **reais** do código quando existirem.
 | Comando | `StartPropositionVoting` | _(já existe)_ |
 | Comando | _(ex.: `RegisterParliamentarian`)_ | _(se aplicável ao MVP)_ |
 | Query | _(ex.: pauta da sessão)_ | _(preencher)_ |
-| _(leitura na app Nest — MVP-09)_ | `SessionReportService` (`apps/backend/src/reports`) | PDF da sessão (Prisma; agregados de votação) |
+| _(leitura na app Nest — MVP-09)_ | `SessionReportService` (`apps/backend/src/reports`) | PDF por sessão e por intervalo (Prisma; apuração e ausências em urnas fechadas) |
 | Porta | `ICreateLegislativePoll` | _(já existe)_ |
 
 ### Voting
@@ -530,7 +530,8 @@ Persistência padrão da aplicação em **`apps/backend`**:
 - `POST /v1/legislative/sessions/:sessionId/attendance` — regista presença (`parliamentarianId`); **201**; `admin` / `plenary_operator`.
 - `DELETE /v1/legislative/sessions/:sessionId/attendance/:parliamentarianId` — revoga presença; **204**.
 - `GET /v1/legislative/sessions/:sessionId/quorum` — quórum MVP: maioria simples dos parlamentares **ativos** do tenant (`presentCount`, `eligibleCount`, `quorumRequired`, `met`).
-- `GET /v1/legislative/sessions/:sessionId/report.pdf` — relatório **PDF** da sessão (pauta + apuração agregada das urnas fechadas + presenças quando existirem); **`x-tenant-id`** obrigatório; papéis `admin` / `plenary_operator` (**MVP-09**).
+- `GET /v1/legislative/sessions/:sessionId/report.pdf` — relatório **PDF** da sessão (pauta com títulos de item, apuração agregada das urnas fechadas, **ausências na votação** por urna fechada face aos parlamentares ativos do tenant, presenças quando existirem); **`x-tenant-id`** obrigatório; papéis `admin` / `plenary_operator` (**MVP-09**).
+- `GET /v1/legislative/sessions/reports.pdf?from=<ISO>&to=<ISO>` — PDF **agregado** das sessões cujo campo `date` está no intervalo **[from, to]** (inclusivo); **400** se datas inválidas, `from` posterior a `to` ou período superior a 366 dias; mesmo RBAC e `x-tenant-id` que o relatório por sessão (**MVP-09**).
 - `POST /v1/legislative/sessions/:sessionId/agenda-items` — incluir item na pauta (`propositionId` para votável; `type`, `title`, `description` conforme tipo); **201**.
 - `PATCH /v1/legislative/sessions/:sessionId/agenda-items/:itemId` — atualizar tipo, proposição, título ou descrição.
 - `PUT /v1/legislative/sessions/:sessionId/agenda-items/order` — reordenar pauta (`orderedItemIds`: lista completa de ids dos itens); **204**.
