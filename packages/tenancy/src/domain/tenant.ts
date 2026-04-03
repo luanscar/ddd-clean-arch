@@ -1,6 +1,6 @@
 import { AggregateRoot, TenantId, ValidationError } from '@repo/shared-kernel'
 import type { TenantStatusValue } from './tenant-status.js'
-import { TenantStatus } from './tenant-status.js'
+import { TenantStatus, isTenantStatusValue } from './tenant-status.js'
 
 interface TenantState {
   displayName: string
@@ -80,13 +80,29 @@ export class Tenant extends AggregateRoot<TenantId> {
   static restore(props: {
     id: TenantId
     displayName: string
-    status: TenantStatusValue
+    /** Valor persistido — validado antes de reconstituir o agregado. */
+    status: string
     createdAt: Date
     updatedAt: Date
   }): Tenant {
+    const trimmed = props.displayName.trim()
+    if (trimmed.length === 0) {
+      throw new ValidationError('Tenant displayName cannot be empty', {
+        field: 'displayName',
+        phase: 'restore',
+      })
+    }
+    if (!isTenantStatusValue(props.status)) {
+      throw new ValidationError('Invalid tenant status', {
+        field: 'status',
+        value: props.status,
+        phase: 'restore',
+      })
+    }
+    const status: TenantStatusValue = props.status
     return new Tenant(props.id, {
-      displayName: props.displayName,
-      status: props.status,
+      displayName: trimmed,
+      status,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
     })
