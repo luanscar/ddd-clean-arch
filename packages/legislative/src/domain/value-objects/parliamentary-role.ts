@@ -5,6 +5,8 @@ export const ParliamentaryRoleValue = {
   MEMBER: 'MEMBER',
   PRESIDENT: 'PRESIDENT',
   SECRETARY: 'SECRETARY',
+  /** Suplente / substituto em exercício (MVP-05 / edital cadastro suplência). */
+  SUBSTITUTE: 'SUBSTITUTE',
 } as const
 
 export type ParliamentaryRoleType = (typeof ParliamentaryRoleValue)[keyof typeof ParliamentaryRoleValue]

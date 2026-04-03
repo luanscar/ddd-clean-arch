@@ -20,7 +20,14 @@ export class InMemoryParliamentarianRepository implements IParliamentarianReposi
   }
 
   async findByUserId(userId: UniqueEntityId, tenantId: TenantId): Promise<Parliamentarian | null> {
-    const item = this.items.find(i => i.userId.equals(userId) && i.tenantId.equals(tenantId))
+    const item = this.items.find(
+      (i) => i.userId.equals(userId) && i.tenantId.equals(tenantId) && i.isActive(),
+    )
+    return item ?? null
+  }
+
+  async findByUserIdAnyStatus(userId: UniqueEntityId, tenantId: TenantId): Promise<Parliamentarian | null> {
+    const item = this.items.find((i) => i.userId.equals(userId) && i.tenantId.equals(tenantId))
     return item ?? null
   }
 
@@ -44,6 +51,7 @@ export class InMemoryParliamentarianRepository implements IParliamentarianReposi
   async findMany(params: FindParliamentariansParams): Promise<PaginatedDTO<Parliamentarian>> {
     const filtered = this.items
       .filter((i) => i.tenantId.equals(params.tenantId))
+      .filter((i) => params.includeInactive || i.isActive())
       .sort((a, b) => a.name.localeCompare(b.name))
 
     const paginationResult = Pagination.create(params.page ?? 1, params.limit ?? 10)
@@ -55,5 +63,9 @@ export class InMemoryParliamentarianRepository implements IParliamentarianReposi
     const slice = filtered.slice(skip, skip + pagination.limit)
 
     return createPaginatedDTO(slice, pagination, filtered.length)
+  }
+
+  async countActiveByTenant(tenantId: TenantId): Promise<number> {
+    return this.items.filter((i) => i.tenantId.equals(tenantId) && i.isActive()).length
   }
 }

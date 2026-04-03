@@ -6,6 +6,7 @@ import {
   type PaginatedDTO,
 } from '@repo/shared-kernel'
 import { DeliberativeSession } from '../../domain/deliberative-session.js'
+import { AgendaItemTypeValue } from '../../domain/value-objects/agenda-item-type.js'
 import type {
   IDeliberativeSessionRepository,
   FindDeliberativeSessionsParams,
@@ -34,6 +35,22 @@ export class InMemoryDeliberativeSessionRepository implements IDeliberativeSessi
 
   async exists(id: UniqueEntityId, tenantId: TenantId): Promise<boolean> {
     return this.items.some((i) => i.id.equals(id) && i.tenantId.equals(tenantId))
+  }
+
+  async hasVotableAgendaItemForProposition(
+    tenantId: TenantId,
+    propositionId: UniqueEntityId,
+  ): Promise<boolean> {
+    return this.items.some((session) => {
+      if (!session.tenantId.equals(tenantId)) {
+        return false
+      }
+      return session.agendaItems.some(
+        (item) =>
+          item.type.value === AgendaItemTypeValue.VOTABLE_PROPOSITION &&
+          item.propositionId?.equals(propositionId),
+      )
+    })
   }
 
   async findMany(params: FindDeliberativeSessionsParams): Promise<PaginatedDTO<DeliberativeSession>> {

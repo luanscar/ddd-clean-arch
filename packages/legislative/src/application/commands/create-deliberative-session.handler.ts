@@ -3,6 +3,7 @@ import { Result as R, TenantId, NotFoundError } from '@repo/shared-kernel'
 import { DeliberativeSession } from '../../domain/deliberative-session.js'
 import type { IParliamentarianRepository } from '../../domain/repositories/parliamentarian-repository.js'
 import type { IDeliberativeSessionRepository } from '../../domain/repositories/deliberative-session-repository.js'
+import { ParliamentarianInactiveError } from '../../domain/errors/parliamentarian-inactive-error.js'
 
 export interface CreateDeliberativeSessionCommand {
   title: string
@@ -26,6 +27,9 @@ export class CreateDeliberativeSessionHandler {
     const president = await this.parliamentarianRepository.findById(command.presidentId, tenantId)
     if (!president) {
       return R.fail(new NotFoundError('Parliamentarian', command.presidentId.toString()))
+    }
+    if (!president.isActive()) {
+      return R.fail(new ParliamentarianInactiveError(command.presidentId.toString()))
     }
 
     const session = DeliberativeSession.create({

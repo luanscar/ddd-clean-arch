@@ -41,7 +41,7 @@ export class SubmitPropositionHandler {
       authorParliamentaryId = byUser.id
     } else if (command.authorId) {
       const byId = await this.parliamentarianRepository.findById(command.authorId, tenantId)
-      if (!byId) {
+      if (!byId || !byId.isActive()) {
         return R.fail(new NotFoundError('Parliamentarian', command.authorId.toString()))
       }
       authorParliamentaryId = command.authorId

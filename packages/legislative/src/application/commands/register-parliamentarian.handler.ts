@@ -29,7 +29,7 @@ export class RegisterParliamentarianHandler {
       ? TenantId.reconstruct(command.tenantId)
       : this.tenantProvider.getTenantId()
 
-    const existing = await this.parliamentarianRepository.findByUserId(command.userId, tenantId)
+    const existing = await this.parliamentarianRepository.findByUserIdAnyStatus(command.userId, tenantId)
     if (existing) {
       return R.fail(new ConflictError('Parliamentarian', 'userId', command.userId.toString()))
     }

@@ -7,6 +7,7 @@ export interface ListParliamentariansQuery {
   tenantId?: string
   page?: number
   limit?: number
+  includeInactive?: boolean
 }
 
 export class ListParliamentariansHandler {
@@ -24,6 +25,7 @@ export class ListParliamentariansHandler {
       tenantId,
       page: query.page,
       limit: query.limit,
+      includeInactive: query.includeInactive,
     })
   }
 }

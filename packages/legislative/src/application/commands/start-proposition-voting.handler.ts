@@ -7,7 +7,9 @@ import type {
 } from '@repo/shared-kernel'
 import { Result as R, TenantId, NotFoundError } from '@repo/shared-kernel'
 import type { IPropositionRepository } from '../../domain/repositories/proposition-repository.js'
+import type { IDeliberativeSessionRepository } from '../../domain/repositories/deliberative-session-repository.js'
 import type { ICreateLegislativePoll } from '../ports/create-legislative-poll.port.js'
+import { PropositionNotOnVotableAgendaError } from '../../domain/errors/proposition-not-on-votable-agenda-error.js'
 
 export interface StartPropositionVotingCommand {
   propositionId: UniqueEntityId
@@ -24,6 +26,7 @@ export interface StartPropositionVotingCommand {
 export class StartPropositionVotingHandler {
   constructor(
     private readonly propositionRepository: IPropositionRepository,
+    private readonly deliberativeSessionRepository: IDeliberativeSessionRepository,
     private readonly createLegislativePoll: ICreateLegislativePoll,
     private readonly tenantProvider: ITenantProvider,
     private readonly eventDispatcher: IDomainEventDispatcher,
@@ -39,6 +42,14 @@ export class StartPropositionVotingHandler {
     const proposition = await this.propositionRepository.findById(command.propositionId, tenantId)
     if (!proposition) {
       return R.fail(new NotFoundError('Proposition', command.propositionId.toString()))
+    }
+
+    const onVotableAgenda = await this.deliberativeSessionRepository.hasVotableAgendaItemForProposition(
+      tenantId,
+      command.propositionId,
+    )
+    if (!onVotableAgenda) {
+      return R.fail(new PropositionNotOnVotableAgendaError(command.propositionId.toString()))
     }
 
     if (proposition.status.value === 'DRAFT') {

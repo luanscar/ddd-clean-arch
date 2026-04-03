@@ -6,6 +6,8 @@ import type { IParliamentarianRepository } from '../../domain/repositories/parli
 export interface GetParliamentarianQuery {
   parliamentarianId: UniqueEntityId
   tenantId?: string
+  /** Admin / plenary_operator podem ver mandato inativo; outros recebem 404. MVP-05. */
+  allowInactive?: boolean
 }
 
 export class GetParliamentarianHandler {
@@ -19,6 +21,9 @@ export class GetParliamentarianHandler {
 
     const p = await this.parliamentarianRepository.findById(q.parliamentarianId, tenantId)
     if (!p) {
+      return R.fail(new NotFoundError('Parliamentarian', q.parliamentarianId.toString()))
+    }
+    if (!p.isActive() && !q.allowInactive) {
       return R.fail(new NotFoundError('Parliamentarian', q.parliamentarianId.toString()))
     }
     return R.ok(p)

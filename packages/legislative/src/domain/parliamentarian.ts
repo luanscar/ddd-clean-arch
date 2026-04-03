@@ -4,10 +4,12 @@ import { ParliamentarianRegisteredEvent } from './events/parliamentarian-registe
 import * as crypto from 'node:crypto'
 
 interface ParliamentarianState {
-  userId: UniqueEntityId  // Ligação com o contexto de Identity
+  userId: UniqueEntityId // Ligação com o contexto de Identity
   name: string
   party?: string
   role: ParliamentaryRole
+  /** Soft delete: inativo não vota nem preside novas regras; registo histórico mantém-se. */
+  active: boolean
   readonly createdAt: Date
   updatedAt: Date
 }
@@ -46,6 +48,14 @@ export class Parliamentarian extends AggregateRoot<UniqueEntityId> {
     return this._state.role.isPresident()
   }
 
+  get active(): boolean {
+    return this._state.active
+  }
+
+  isActive(): boolean {
+    return this._state.active
+  }
+
   /**
    * Factory para novo parlamentar.
    */
@@ -64,6 +74,7 @@ export class Parliamentarian extends AggregateRoot<UniqueEntityId> {
       name: props.name,
       party: props.party,
       role: props.role,
+      active: true,
       createdAt: props.now,
       updatedAt: props.now,
     }
@@ -92,6 +103,39 @@ export class Parliamentarian extends AggregateRoot<UniqueEntityId> {
 
   changeRole(newRole: ParliamentaryRole, now: Date): void {
     this._state.role = newRole
+    this._state.updatedAt = now
+  }
+
+  /**
+   * Atualização parcial (nome, partido, papel legislativo, ativo).
+   * Pelo menos um campo deve ser fornecido (validado na aplicação).
+   */
+  applyUpdate(
+    patch: {
+      name?: string
+      party?: string | null
+      role?: ParliamentaryRole
+      active?: boolean
+    },
+    now: Date,
+  ): void {
+    if (patch.name !== undefined) {
+      this._state.name = patch.name
+    }
+    if (patch.party !== undefined) {
+      this._state.party = patch.party ?? undefined
+    }
+    if (patch.role !== undefined) {
+      this._state.role = patch.role
+    }
+    if (patch.active !== undefined) {
+      this._state.active = patch.active
+    }
+    this._state.updatedAt = now
+  }
+
+  deactivate(now: Date): void {
+    this._state.active = false
     this._state.updatedAt = now
   }
 
