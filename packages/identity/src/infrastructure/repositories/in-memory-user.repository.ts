@@ -77,4 +77,14 @@ export class InMemoryUserRepository implements IUserRepository {
 
     return { users, total }
   }
+
+  async countActiveAdmins(tenantId: TenantId): Promise<number> {
+    let n = 0
+    for (const u of this.users.values()) {
+      if (u.tenantId === tenantId.value && u.role === 'admin' && u.status === 'active') {
+        n++
+      }
+    }
+    return n
+  }
 }

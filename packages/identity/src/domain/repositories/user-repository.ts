@@ -30,4 +30,9 @@ export interface IUserRepository extends IRepository<User, UniqueEntityId> {
     tenantId: TenantId,
     pagination: Pagination,
   ): Promise<{ users: User[]; total: number }>
+
+  /**
+   * Utilizadores ativos com papel admin no inquilino (proteção “último admin”, MVP-06).
+   */
+  countActiveAdmins(tenantId: TenantId): Promise<number>
 }

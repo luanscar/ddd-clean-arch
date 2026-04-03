@@ -6,9 +6,17 @@ import { ValueObject, ValidationError } from '@repo/shared-kernel'
  * UserRole — Roles disponíveis no contexto de identidade.
  * Use `as const` + type union para ser inferível pelo TypeScript sem enum nativo.
  */
+/**
+ * Papéis persistidos no agregado User.
+ * Alinhar a `docs/mvp-sessao-votacao.md` §2.1: `admin` ≈ TENANT_ADMIN;
+ * `plenary_operator` ≈ PLENARY_OPERATOR; `parliamentarian` ≈ PARLIAMENTARIAN;
+ * `member` mantém compatibilidade (tratado no backend como leitura/voto como parlamentar quando aplicável).
+ */
 export const UserRole = {
   ADMIN: 'admin',
   MEMBER: 'member',
+  PLENARY_OPERATOR: 'plenary_operator',
+  PARLIAMENTARIAN: 'parliamentarian',
 } as const
 
 export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole]

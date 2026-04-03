@@ -18,6 +18,7 @@ export * from './domain/errors/user-cpf-already-linked-error.js'
 export * from './domain/errors/user-must-have-identifier-error.js'
 export * from './domain/errors/user-not-found-error.js'
 export * from './domain/errors/user-inactive-error.js'
+export * from './domain/errors/last-tenant-admin-error.js'
 export * from './domain/errors/invalid-credentials-error.js'
 
 // Domain Service & Repository Interfaces
@@ -39,6 +40,8 @@ export * from './application/commands/cpf-auth.command.js'
 export * from './application/commands/register-user-with-cpf.handler.js'
 export * from './application/commands/authenticate-with-cpf.handler.js'
 export * from './application/commands/link-cpf.handler.js'
+export * from './application/commands/update-tenant-user.command.js'
+export * from './application/commands/update-tenant-user.handler.js'
 export * from './application/commands/authenticate.command.js'
 export * from './application/commands/authenticate.handler.js'
 

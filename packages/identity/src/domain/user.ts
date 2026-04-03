@@ -209,6 +209,12 @@ export class User extends AggregateRoot<UniqueEntityId> {
     this._state.updatedAt = now
   }
 
+  /** Atribuição de papel RBAC (MVP-06); não valida “último admin” — o handler aplica-se. */
+  assignRole(role: Role, now: Date): void {
+    this._state.role = role
+    this._state.updatedAt = now
+  }
+
   toState(): Readonly<UserState> {
     return { ...this._state }
   }
