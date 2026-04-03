@@ -16,19 +16,17 @@ Este ficheiro liga o marco Git **`mvp-sessao-votacao-backend-2026-04`** ao traba
 
 ## Issues sugeridas (ordem sugerida)
 
-### 1. Documentação — alinhar §1 do MVP ao já entregue
+### 1. Documentação — alinhar §1 do MVP ao já entregue _(fechado)_
 
-- **Título:** `docs: marcar âmbito MVP §1 conforme backend §11`
-- **Corpo:** Atualizar checkboxes e texto em `docs/mvp-sessao-votacao.md` secção 1 (Âmbito) para refletir o que já existe (Prisma, rotas, e2e). Manter “fora de âmbito” explícito.
+- **Estado:** fechado — `docs/mvp-sessao-votacao.md` §1 atualizado com checkboxes e “fora de âmbito” alinhados ao backend §11.
 - **Refs:** MVP doc §1, §11
 
 ---
 
-### 2. ADR — D1 e D2 (abertura de urna e consistência)
+### 2. ADR — D1 e D2 (abertura de urna e consistência) _(fechado)_
 
-- **Título:** `adr: quem abre urna (D1) e consistência legislative↔voting (D2)`
-- **Corpo:** O ADR deve **anexar** (no corpo da issue ou ficheiro `docs/adr/`) a **matriz ação × perfil** (tabela §2.4 em [`mvp-sessao-votacao.md`](mvp-sessao-votacao.md)) e a decisão de **delegação** Presidência vs operador de plenário. Referenciar também §2.3 (atos institucionais) e §2.5 (variância entre câmaras). **Estado atual:** D1 e D2 já estão decididos na secção 8 do mesmo ficheiro; o ADR formaliza, congela e liga à implementação de guards (`@Roles` / política por tenant para `allowPlenaryOperatorToOpenPoll` ou equivalente).
-- **Refs:** MVP §2, §8; implementação MVP-06
+- **Estado:** fechado — [`docs/adr/0001-abertura-encerramento-urna-roles.md`](adr/0001-abertura-encerramento-urna-roles.md) e [`docs/adr/0002-abertura-urna-consistencia-legislative-voting.md`](adr/0002-abertura-urna-consistencia-legislative-voting.md); §8 do MVP liga para os ADRs.
+- **Refs:** MVP §2, §8; `PollManagementGuard`, `rbac.constants`
 
 ---
 

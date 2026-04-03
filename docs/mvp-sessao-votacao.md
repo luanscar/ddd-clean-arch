@@ -4,11 +4,11 @@ Documento operacional para **detalhar requisitos** da fatia “sessão → urna 
 
 ## Como usar este arquivo
 
-1. Preencha **Âmbito** e **Fora de âmbito** (MVP vs depois).
+1. **Âmbito** e **Fora de âmbito** estão sincronizados com o backend atual (§1); ajuste só se o produto mudar.
 2. Para cada requisito, copie o bloco **Modelo de requisito** e atribua um ID (`MVP-01`, …).
 3. Complete a **Tabela de rastreio** (contexto → comando/query → integração).
 4. Atualize **Comandos, queries e portas** e **Eventos de integração** conforme você fechar decisões.
-5. Mantenha **Decisões pendentes** alinhadas a ADRs ou issues.
+5. **Decisões** D1/D2 estão formalizadas em [`docs/adr/`](adr/README.md); D3 e NFR seguem em issues/backlog.
 6. Use os **IDs EDT-** (ver [seção 10](#10-rastreio-edital-edt--mvp)) para citar o Termo de Referência em PRs e critérios de aceitação.
 
 ---
@@ -17,23 +17,27 @@ Documento operacional para **detalhar requisitos** da fatia “sessão → urna 
 
 **Objetivo da fatia (uma frase):**
 
-> _(ex.: Permitir que, em uma sessão deliberativa de um inquilino, uma proposição na pauta abra uma urna no motor de votação, receba cédulas e reflita o resultado na proposição.)_
+> Permitir que, numa sessão deliberativa por inquilino (`TenantId`), itens de pauta com proposição votável abram urna no motor de votação, recebam cédulas, encerrem com apuração e reflitam o resultado na proposição, com leitura para painéis (incluindo público agregado), ordem do dia rica, presença/quórum MVP e relatórios PDF conforme [`§11`](#11-contratos-http-mínimos-mvp--openapi).
 
-**Inclui (marcar e completar):**
+**Inclui (estado backend alinhado a §11 — marco `mvp-sessao-votacao-backend-2026-04`):**
 
-- [ ] Configuração mínima de sessão deliberativa e itens de pauta (`DeliberativeSession`, `Proposition`).
-- [ ] Abertura de votação legislativa → criação de `Poll` (porta `ICreateLegislativePoll`, comando `StartPropositionVoting`).
-- [ ] Registro de voto no motor (`Poll` `OPEN`, uma cédula por eleitor por pauta).
-- [ ] Encerramento da urna e apuração (`Tally`).
-- [ ] Sincronização do resultado → estado da `Proposition` (handler de integração / evento).
-- [ ] _(opcional MVP)_ Leitura para painel do operador ou público (somente o acordado na política de transparência).
+- [x] Sessão deliberativa, proposições e pauta (`DeliberativeSession`, `SessionAgendaItem`, `Proposition`) com tipos de expediente, reordenação e anexos PDF em bucket (MVP-08).
+- [x] Abertura de votação legislativa → criação e abertura de `Poll` (`StartPropositionVoting`, `ICreateLegislativePoll`, `POST .../propositions/:id/polls`).
+- [x] Registo e alteração de voto com urna `OPEN` (`POST`/`PATCH .../polls/:id/votes`, eleitor = utilizador JWT).
+- [x] Encerramento da urna e apuração (`PATCH .../polls/:id` → `Tally`).
+- [x] Sincronização do resultado → estado da `Proposition` (MVP-04, evento/handlers na app Nest).
+- [x] Leitura para painel e público: snapshot agregado, SSE e lista nominal conforme política (MVP-07); relatórios PDF por sessão e por intervalo (MVP-09).
+- [x] Presença registada e quórum MVP (maioria simples sobre ativos do tenant), sem formalizar regimento completo (MVP-08 / 7b).
+- [x] Identidade e RBAC mínimos: papéis `admin`, `plenary_operator`, `parliamentarian`, `member`; gestão de utilizadores (MVP-05/MVP-06).
 
-**Fora de âmbito (deixar explícito para não estourar o MVP):**
+**Fora de âmbito (explícito):**
 
-- Uso da palavra, filas de oradores, tempos — _a menos que você abra um requisito próprio_.
-- Presença e quórum formal — _idem_.
-- Multi-urna simultânea na mesma sessão — _definir_.
-- _(outros)_
+- Uso da palavra, filas de oradores, cronómetros e sorteios — salvo novo requisito.
+- Quórum e presença conforme regimento institucional completo (biometria/PIN, EDT-4.3.g formal, etc.) — o MVP cobre apenas o modelo lean documentado.
+- Multi-urna simultânea na mesma sessão — não modelado como núcleo; evoluir com requisito próprio.
+- Exportação de relatórios para sites/sistemas externos (**EDT-4.7.e**).
+- Frontend web dedicado (consumo via API + painéis cliente fica fora deste marco backend).
+- Parametrização por tenant “só Presidência clica” (**D3** — backlog).
 
 ---
 
@@ -408,13 +412,15 @@ Definir **nome estável**, **produtor**, **consumidor** e **payload mínimo** (s
 
 ---
 
-## 8. Decisões pendentes
+## 8. Decisões arquiteturais (ADRs)
 
-| # | Pergunta | Opções | Decisão | Data |
-| :--- | :--- | :--- | :--- | :--- |
-| D1 | Quem pode abrir e encerrar urna no sistema? | Só presidência / Só secretaria-operador / Ambos | **Ambos** os perfis `PLENARY_OPERATOR` e `PRESIDING_OFFICER` estão autorizados às rotas de abertura (`POST .../polls` via `StartPropositionVoting`) e encerramento (`PATCH .../polls/:id`). `TENANT_ADMIN` fica para gestão de cadastros; uso para urna só em piloto/break-glass se documentado. Parametrização futura por tenant pode restringir a um único papel. | 2026-04-02 |
-| D2 | Consistência legislative↔voting na abertura | Mesma transação vs sagas vs eventual | **Síncrono na mesma composição (Nest monólito):** o fluxo atual (`StartPropositionVoting` → `ICreateLegislativePoll` → `CreatePoll` + `OpenPoll`) permanece na mesma requisição; falhas devem expor erro à API e **evitar estado órfão** na Legislative (transação única ou compensação explícita no handler). **Sagas / consistência eventual** reservadas para quando Voting e Legislative estiverem desacoplados em processos ou filas. **UX:** operador vê falha imediata (5xx/4xx) e pode repetir de forma idempotente quando o domínio permitir. | 2026-04-02 |
-| D3 | Política por tenant para “só Presidência clica” | Flag / config | **Backlog:** `allowPlenaryOperatorToOpenPoll` (nome indicativo) — quando `false`, apenas `PRESIDING_OFFICER` abre/fecha urna. | — |
+Decisões **D1** e **D2** estão formalizadas nos ficheiros em [`docs/adr/`](adr/) (aceites). A tabela abaixo resume e aponta para o ADR; **D3** permanece em backlog.
+
+| # | Pergunta | Opções | Decisão | ADR | Data |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| D1 | Quem pode abrir e encerrar urna no sistema? | Só presidência / Só secretaria / Ambos | **Operador de plenário + admin** (`PLENARY_STAFF`) **ou** utilizador que é **Presidente da sessão** da pauta que contém a proposição (via `PollManagementGuard` e `parliamentarian.userId` do presidente). Alinhado a §2.4. | [ADR-0001](adr/0001-abertura-encerramento-urna-roles.md) | 2026-04-02 |
+| D2 | Consistência legislative↔voting na abertura | Mesma transação vs sagas vs eventual | **Síncrono** na mesma composição (Nest): um pedido HTTP; sem saga entre processos no MVP; falhas visíveis na API; evitar estado órfão na Legislative. | [ADR-0002](adr/0002-abertura-urna-consistencia-legislative-voting.md) | 2026-04-02 |
+| D3 | Política por tenant para “só Presidência clica” | Flag / config | **Backlog:** `allowPlenaryOperatorToOpenPoll` (nome indicativo) — quando `false`, restringir abertura/fecho ao presidente. | — | — |
 
 ---
 
